@@ -653,7 +653,7 @@ interrupt void cpu_timer0_isr(void)
    {
        SysRegs.BAT80VStateReg.bit.SysAalarm=0;
    }
-   // Cal80VSysFaultCheck(&SysRegs);
+    Cal80VSysFaultCheck(&SysRegs);
    if(SysRegs.BAT80VFaultReg.all != 0)
    {
 
