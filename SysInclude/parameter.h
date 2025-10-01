@@ -204,15 +204,6 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 #define IMDBOTOff          GpioDataRegs.GPACLEAR.bit.GPIO27=1
 
 
-// Bit 연산시 일반적으로 쓰이는 부분을 매크로 함수로 정의함  
-
-#define BIT_MASK(bit)			(1 << (bit))
-#define GetBit(val, bit)		(((val) & BIT_MASK(bit)) >> (bit))
-#define SetBit(val, bit)		(val |= BIT_MASK(bit))
-#define ClearBit(val, bit)		(val &= ~BIT_MASK(bit))
-#define ToggleBit(val, bit)		(val ^= BIT_MASK(bit))
-#define bit_is_set(val, bit)	(val & BIT_MASK(bit))
-#define bit_is_clear(val, bit)	(~val & BIT_MASK(bit))
 
 //------------------------------------------------------------------------------------------------
 //#define A_PTR(y)			*(volatile unsigned int *)(y)
@@ -231,12 +222,12 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 #define SysRegTimer300msec   299
 #define SysRegTimer500msec   499
 #define SysRegTimer1000msec  1000
-#define CellVoltsampling100msec 100
+#define CellVoltsampling100msec 50
 
 /*-------------------------------------------------------------------------------
  TMS320F28335 CLK SET UP 
 -------------------------------------------------------------------------------*/
-#define	CPUCLK				   90000000L							// CPU Main Clock
+#define	CPUCLK				    90000000L							// CPU Main Clock
 /*-------------------------------------------------------------------------------
  TMS320F28335 CLK SET UP 
 -------------------------------------------------------------------------------*/
@@ -315,7 +306,7 @@ Parameter
 
 #define     Sys80VCellVoltCount         24
 #define     Sys12VCellVoltCount         4
-#define     Sys80VCellTempCount         12
+#define     Sys80VCellTempCount         24
 #define     Sys12VCellTempCount         4
 #define     SysNoramlState              0
 #define     SysAlarmlState              1
@@ -358,7 +349,8 @@ Parameter
 */
 
 // Alarm Set Vaule  //
-#define     C_Bat80VOVPackCurrentAlarm                     450.0//450.0//480.0
+/*
+#define     C_Bat80VOVPackCurrentAlarm                     504.0//450.0//480.0
 #define     C_Bat80VOVPkACKSOCAlarm                        100.0
 #define     C_Bat80VUDPkACKSOCAlarm                        5.0
 #define     C_Bat80VOVPackVoltageAlarm                     108.8   // Cell 4.20V * 24
@@ -371,21 +363,23 @@ Parameter
 #define     C_Bat80VOVCellTemperatureAlarm                 55.0
 #define     C_Bat80VUDCellTemperatureAlarm                -15.0
 #define     C_Bat80VDIVCellTemperatureAlarm                10.0
+*/
 
 //Fault Set Vaule
 #define     C_Bat80VFaultDelayCount                        8000
 #define     C_ISOSPICount                                  50
 #define     C_CANCount                                     50
 #define     C_RleyCount                                    1
-#define     C_Bat80VOVPackCurrentFault                     500.0//500.0
+#define     C_Bat80VOVPackCurrentFault                     506.0//500.0
+#define     C_Bat80VOVPackOCTimer                          500.0//500.0
 #define     C_Bat80VOVPackSOCFault                         101.0
 #define     C_Bat80VUDPackSOCFault                         -0.1//-0.1
-#define     C_Bat80VOVPackVoltageFault                     102.0  // Cell 4.25V * 24
-#define     C_Bat80VUDPackVoltageFault                     67.2   // Cell 2.80V * 24
+#define     C_Bat80VOVPackVoltageFault                     102.4  // Cell 4.27V * 24
+#define     C_Bat80VUDPackVoltageFault                     67.2   // Cell 2.8V * 24
 #define     C_Bat80VOVPackTemperatureFault                 60.0
 #define     C_Bat80VUNPackTemperatureFault                -30.0
-#define     C_Bat80VOVCellVoltageFault                     4.25
-#define     C_Bat80VUDCellVoltageFault                     2.80
+#define     C_Bat80VOVCellVoltageFault                     4.27
+#define     C_Bat80VUDCellVoltageFault                     2.75
 #define     C_Bat80VDIVCellVoltageFault                    0.5
 #define     C_Bat80VOVCellTemperatureFault                 60.0
 #define     C_Bat80VUDCellTemperatureFault                -25.0
@@ -393,7 +387,7 @@ Parameter
 #define     C_IOSresistanceFault                           45000
 //Fault Delay Time
 
-#define     C_Bat80VOVPackCurrentFaultDelay               1000
+#define     C_Bat80VOVPackCurrentFaultDelay               1
 #define     C_Bat80VOVPackSOCFaultDelay                   0
 #define     C_Bat80VUDPackSOCFaultDelay                   0
 #define     C_Bat80VOVPackVoltageFaultDelay               2000

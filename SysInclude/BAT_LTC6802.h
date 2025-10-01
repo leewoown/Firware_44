@@ -202,6 +202,10 @@ typedef struct Slave_Date
     unsigned int     len;
     unsigned int     ErrorCode;
     unsigned int     ErrorCount;
+    unsigned int     ErrorCountA;
+    unsigned int     ErrorCountB;
+    unsigned int     ErrorCountC;
+    unsigned int     ErrorCountD;
     unsigned int     RError;
     unsigned int     WError;
     unsigned int     Error;
@@ -243,10 +247,15 @@ typedef struct Slave_Date
     unsigned int TempsChSelet;
     unsigned int GPIO0ADC;
     unsigned int GPIORef;
+
+
+
+
     unsigned int test0;
     unsigned int test1;
     unsigned int testerr;
     float32    BatICTempsF;
+
 }SlaveReg;
 
 #endif  // end of PARAMETER.H definition

@@ -210,7 +210,7 @@ void SysVarINIT(SystemReg *s)
     s->BACellUBTCount=0;
 
 
-
+    memset(&s->Bat80VAlarmCont[0],0.0,32);
     memset(&s->Bat80VCellVoltageF[0],0.0,Sys80VCellVoltCount);
     memset(&s->Bat12VCellVoltageF[0],0.0,Sys12VCellVoltCount);
 }
@@ -343,7 +343,7 @@ void Cal80VSysTemperatureHandle(SystemReg *s)
     float32 SysTemperatureBufF=0;
     SysCellMaxTemperatureF =s->Bat80VCellTemperatureF [0];
     SysCellMinTemperatureF =s->Bat80VCellTemperatureF [0];
-    CellSize = 12;//24
+    CellSize = 24;
 
     for(CellCount=0;CellCount<CellSize;CellCount++)
     {
@@ -359,15 +359,15 @@ void Cal80VSysTemperatureHandle(SystemReg *s)
          }
     }
     s->Bat80VCellMaxTemperatureF    = SysCellMaxTemperatureF;
-    s->Bat80VCellMinTemperatureF    = SysCellMaxTemperatureF-3.0;
+    s->Bat80VCellMinTemperatureF    = SysCellMaxTemperatureF;
     s->Bat80VCellDivTemperatureF    = s->Bat80VCellMaxTemperatureF-s->Bat80VCellMinTemperatureF;
-    CellSize = 12;
+    CellSize =24;
     for(CellCount=0;CellCount<CellSize;CellCount++)
     {
         SysTemperatureBufF = SysTemperatureBufF+ s->Bat80VCellTemperatureF[CellCount];
     }
-   // s->Bat80VCellAgvTemperatureF   = (float32)SysTemperatureBufF/CellSize;
-    s->Bat80VCellAgvTemperatureF = (s->Bat80VCellMaxTemperatureF +s->Bat80VCellMinTemperatureF) /2;
+    s->Bat80VCellAgvTemperatureF   = (float32)SysTemperatureBufF/CellSize;
+   // s->Bat80VCellAgvTemperatureF = (s->Bat80VCellMaxTemperatureF +s->Bat80VCellMinTemperatureF) /2;
 }
 
 void Cal80VSysCurrentHandle(SystemReg *s)
@@ -380,15 +380,15 @@ void Cal80VSysCurrentHandle(SystemReg *s)
     Currentbuf        =  ((float)CurrentCT)/1000;          // (mA to A) CAB500 resolution 1mA
     s->Bat80VCurrentF  = C_CTDirection * Currentbuf;    // Decide Current sensor's direction
 
-    if(s->Bat80VCurrentF>=500.0)
+    if(s->Bat80VCurrentF>=700.0)
     {
-        s->Bat80VCurrentF=500.0;
+        s->Bat80VCurrentF=700.0;
     }
-    if(s->Bat80VCurrentF<=-500.0)
+    if(s->Bat80VCurrentF<=-700.0)
     {
-        s->Bat80VCurrentF=-500.0;
+        s->Bat80VCurrentF=-700.0;
     }
-    if(s->Bat80VCurrentF < 0)
+    if(s->Bat80VCurrentF <= 0)
     {
         s->Bat80VCurrentAsbF =-1.0 * s->Bat80VCurrentF;
     }
@@ -401,128 +401,366 @@ void Cal80VSysCurrentHandle(SystemReg *s)
 void Cal80VSysAlarmtCheck(SystemReg *s)
 {
 
-      // 과전류 FAULT
-      if(s->Bat80VCurrentAsbF >= C_Bat80VOVPackCurrentAlarm)
-      {
-          s-> BAT80VAlarmReg.bit.PackVCT_OV=1;
+     // 과전류 Alarm,유지시간카운터배열값:0,유지시간;100msec
+     if(Hyst_On(s->Bat80VCurrentAsbF,500.0f))
+     {
+          if(s->Bat80VAlarmCont[0]< 100){++s->Bat80VAlarmCont[0];}
+          if(s->Bat80VAlarmCont[0]>=100)
+          {
+              s->BAT80VAlarmReg.bit.PackOC=1;
+          }
       }
       else
       {
-          s-> BAT80VAlarmReg.bit.PackVCT_OV=0;
+          if(s->BAT80VAlarmReg.bit.PackOC==0)
+          {
+              s->Bat80VAlarmCont[0]=0;
+          }
+          if(Hyst_Off(s->Bat80VCurrentAsbF,456.0f))
+          {
+              s->Bat80VAlarmCont[0]=0;
+              s->BAT80VAlarmReg.bit.PackOC=0;
+          }
       }
-      // 팩 과충전 Alarm
-      if(s->Bat80VSOCF >=C_Bat80VOVPkACKSOCAlarm)
+      // 팩 과충전 Alarm,유지시간카운터배열값:1,유지시간;100msec
+      if(Hyst_On(s->Bat80VSOCF,100.1f))
       {
-          s->BAT80VAlarmReg.bit.PackVSOC_OV =1;
+          if(s->Bat80VAlarmCont[1]< 100){++s->Bat80VAlarmCont[1];}
+          if(s->Bat80VAlarmCont[1]>=100)
+          {
+              s->BAT80VAlarmReg.bit.PackVSOC_OV=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.PackVSOC_OV =0;
+          if(s->BAT80VAlarmReg.bit.PackVSOC_OV==0)
+          {
+              s->Bat80VAlarmCont[1]=0;
+          }
+          if(Hyst_Off(s->Bat80VSOCF,97.0f))
+          {
+              s->Bat80VAlarmCont[1]=0;
+              s->BAT80VAlarmReg.bit.PackVSOC_OV=0;
+          }
       }
-      // 팩 저충전 Alarm
-      if(s->Bat80VSOCF <= C_Bat80VUDPkACKSOCAlarm)
+      // 팩 저충전,유지시간카운터배열값:2,유지시간;100msec
+      if(Hyst_Off(s->Bat80VSOCF,5.0f))
       {
-          s->BAT80VAlarmReg.bit.PackVSOC_UN =1;
+          if(s->Bat80VAlarmCont[2]< 100){++s->Bat80VAlarmCont[2];}
+          {
+              s->BAT80VAlarmReg.bit.PackVSOC_UN=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.PackVSOC_UN =0;
+          if(s->BAT80VAlarmReg.bit.PackVSOC_UN==0)
+          {
+              s->Bat80VAlarmCont[2]=0;
+          }
+          if(Hyst_On(s->Bat80VSOCF,5.25f))
+          {
+              s->Bat80VAlarmCont[2]=0;
+              s->BAT80VAlarmReg.bit.PackVSOC_UN=0;
+          }
       }
-      // 팩 과전압 Alarm
-      if(s->Bat80VVoltageF >= C_Bat80VOVPackVoltageAlarm)
+      // 팩 과전압 Alarm,유지시간카운터배열값:3,유지시간;100msec
+      if(Hyst_On(s->Bat80VVoltageF,102.0f))
       {
-          s->BAT80VAlarmReg.bit.PackVolt_OV =1;
+          if(s->Bat80VAlarmCont[3]< 100){++s->Bat80VAlarmCont[3];}
+          if(s->Bat80VAlarmCont[3]>=100)
+          {
+              s->BAT80VAlarmReg.bit.PackVolt_OV=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.PackVolt_OV =0;
+          if(s->BAT80VAlarmReg.bit.PackVolt_OV==0)
+          {
+              s->Bat80VAlarmCont[3]=0;
+          }
+          if(Hyst_Off(s->Bat80VVoltageF,98.9f))
+          {
+              s->Bat80VAlarmCont[3]=0;
+              s->BAT80VAlarmReg.bit.PackVolt_OV=0;
+          }
       }
-      // 팩 저전압 Alarm
-      if(s->Bat80VVoltageF <= C_Bat80VUDPackVoltageAlarm)
+      // 팩 저전압 Alarm,유지시간카운터배열값:4,유지시간;100msec
+      if(Hyst_Off(s->Bat80VVoltageF,68.4f))
       {
-          s->BAT80VAlarmReg.bit.PackVolt_UN =1;
+          if(s->Bat80VAlarmCont[4]< 100){++s->Bat80VAlarmCont[4];}
+          if(s->Bat80VAlarmCont[4]>=100)
+          {
+              s->BAT80VAlarmReg.bit.PackVolt_UN=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.PackVolt_UN =0;
+          if(s->BAT80VAlarmReg.bit.PackVolt_UN==0)
+          {
+              s->Bat80VAlarmCont[4]=0;
+          }
+          if(Hyst_On(s->Bat80VVoltageF,71.4f))
+          {
+              s->Bat80VAlarmCont[4]=0;
+              s->BAT80VAlarmReg.bit.PackVolt_UN=0;
+          }
       }
-      // 팩 과온 Alarm
-      if(s->Bat80VCellAgvTemperatureF >= C_Bat80VOVPackTemperatureAlarm)
+      // 팩 저전압 Alarm,유지시간카운터배열값:5,유지시간;100msec
+      if(Hyst_On(s->Bat80VCellAgvTemperatureF,55.0f))
       {
-          s->BAT80VAlarmReg.bit.PackTemp_OV=1;
+          if(s->Bat80VAlarmCont[5]< 100){++s->Bat80VAlarmCont[5];}
+          if(s->Bat80VAlarmCont[5]>=100)
+          {
+              s->BAT80VAlarmReg.bit.PackTemp_OV=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.PackTemp_OV=0;
+          if(s->BAT80VAlarmReg.bit.PackTemp_OV==0)
+          {
+              s->Bat80VAlarmCont[5]=0;
+          }
+          if(Hyst_Off(s->Bat80VCellAgvTemperatureF,52.3f))
+          {
+              s->Bat80VAlarmCont[5]=0;
+              s->BAT80VAlarmReg.bit.PackTemp_OV=0;
+          }
       }
-      // 팩 저온 Alarm
-      if(s->Bat80VCellAgvTemperatureF <= C_Bat80VUNPackTemperatureAlarm)
+      // 팩 저온 Alarm,유지시간카운터배열값:6,유지시간;100msec
+      if(s->BAT80VStateReg.bit.sysDisChaMode==1)
       {
-          s->BAT80VAlarmReg.bit.PackTemp_UN=1;
+          if(Hyst_Off(s->Bat80VCellAgvTemperatureF,-15.0f))
+          {
+              if(s->Bat80VAlarmCont[6]< 100){++s->Bat80VAlarmCont[6];}
+              if(s->Bat80VAlarmCont[6]>=100)
+              {
+                  s->BAT80VAlarmReg.bit.PackTemp_UN=1;
+              }
+          }
+          else
+          {
+              if(s->BAT80VAlarmReg.bit.PackTemp_UN==0)
+              {
+                  s->Bat80VAlarmCont[6]=0;
+              }
+              if(Hyst_On(s->Bat80VCellAgvTemperatureF,0.0f))
+              {
+                  s->Bat80VAlarmCont[6]=0;
+                  s->BAT80VAlarmReg.bit.PackTemp_UN=0;
+              }
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.PackTemp_UN=0;
+          if(s->BAT80VStateReg.bit.sysDisChaMode==1)
+          {
+              if(Hyst_Off(s->Bat80VCellAgvTemperatureF,-15.0f))
+              {
+                  if(s->Bat80VAlarmCont[6]< 100){++s->Bat80VAlarmCont[6];}
+                  if(s->Bat80VAlarmCont[6]>=100)
+                  {
+                      s->BAT80VAlarmReg.bit.PackTemp_UN=1;
+                  }
+              }
+              else
+              {
+                  if(s->BAT80VAlarmReg.bit.PackTemp_UN==0)
+                  {
+                      s->Bat80VAlarmCont[6]=0;
+                  }
+                  if(Hyst_On(s->Bat80VCellAgvTemperatureF,0.0f))
+                  {
+                      s->Bat80VAlarmCont[6]=0;
+                      s->BAT80VAlarmReg.bit.PackTemp_UN=0;
+                  }
+              }
+          }
       }
-      // 셀 과전압 Alarm
-      if(s->Bat80VCellMaxVoltageF >= C_Bat80VOVCellVoltageAlarm)
+      if(s->BAT80VStateReg.bit.sysDisChaMode==1)
       {
-          s->BAT80VAlarmReg.bit.CellVolt_OV =1;
+       /* s->BBat80VDisCHAPWRContintyF
+          if(Hyst_Off(s->Bat80VUnbalPwr,-15.0f))
+          {
+              if(s->Bat80VAlarmCont[7]< 100){++s->Bat80VAlarmCont[7];}
+              if(s->Bat80VAlarmCont[7]>=100)
+              {
+                  s->BAT80VAlarmReg.bit.PackUnPWR_BL=1;
+              }
+          }
+          else
+          {
+              if(s->BAT80VAlarmReg.bit.PackUnPWR_BL==0)
+              {
+                  s->Bat80VAlarmCont[7]=0;
+              }
+              if(Hyst_On(s->Bat80VUnbalPwr,0.0f))
+              {
+                  s->Bat80VAlarmCont[7]=0;
+                  s->BAT80VAlarmReg.bit.PackUnPWR_BL=0;
+              }
+          }
+        */
+      }
+      else if(s->BAT80VStateReg.bit.sysDisChaMode==0)
+      {
+          /* s->BBat80VDisCHAPWRContintyF
+          if(Hyst_Off(s->Bat80VUnbalPwr,-15.0f))
+          {
+              if(s->Bat80VAlarmCont[7]< 100){++s->Bat80VAlarmCont[7];}
+              if(s->Bat80VAlarmCont[7]>=100)
+              {
+                  s->BAT80VAlarmReg.bit.PackUnPWR_BL=1;
+              }
+          }
+          else
+          {
+              if(s->BAT80VAlarmReg.bit.PackUnPWR_BL==0)
+              {
+                  s->Bat80VAlarmCont[7]=0;
+              }
+              if(Hyst_On(s->Bat80VUnbalPwr,0.0f))
+              {
+                  s->Bat80VAlarmCont[7]=0;
+                  s->BAT80VAlarmReg.bit.PackUnPWR_BL=0;
+              }
+          }
+           */
+      }
+
+      // 셀 과전압 Alarm,유지시간카운터배열값:8,유지시간:00msec
+      if(Hyst_On(s->Bat80VCellMaxVoltageF,4.25f))
+      {
+          if(s->Bat80VAlarmCont[8]< 100){++s->Bat80VAlarmCont[8];}
+          if(s->Bat80VAlarmCont[8]>=100)
+          {
+              s->BAT80VAlarmReg.bit.CellVolt_OV=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.CellVolt_OV =0;
+          if(s->BAT80VAlarmReg.bit.CellVolt_OV==0)
+          {
+              s->Bat80VAlarmCont[8]=0;
+          }
+          if(Hyst_Off(s->Bat80VCellMaxVoltageF,4.23f))
+          {
+              s->Bat80VAlarmCont[8]=0;
+              s->BAT80VAlarmReg.bit.CellVolt_OV=0;
+          }
       }
-      // 셀 저전압 Alarm
-      if(s->Bat80VCellMinVoltageF <= C_Bat80VUDCellVoltageAlarm)
+      // 셀 저전압 Alarm,유지시간카운터배열값:9,유지시간:100msec
+      if(Hyst_Off(s->Bat80VCellMinVoltageF,2.80f))
       {
-          s->BAT80VAlarmReg.bit.CellVolt_UN =1;
+          if(s->Bat80VAlarmCont[9]< 100){++s->Bat80VAlarmCont[8];}
+          if(s->Bat80VAlarmCont[9]>=100)
+          {
+              s->BAT80VAlarmReg.bit.CellVolt_UN=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.CellVolt_UN =0;
+          if(s->BAT80VAlarmReg.bit.CellVolt_UN==0)
+          {
+              s->Bat80VAlarmCont[9]=0;
+          }
+          if(Hyst_On(s->Bat80VCellMinVoltageF,2.94f))
+          {
+              s->Bat80VAlarmCont[9]=0;
+              s->BAT80VAlarmReg.bit.CellVolt_UN=0;
+          }
       }
-      // 셀 전압 편차 Alarm
-      if(s->Bat80VCellDivVoltageF >= C_Bat80VDIVCellVoltageAlarm)
+      // 셀 전압 편차 Alarm,유지시간카운터배열값:10,유지시간:100msec
+      if(Hyst_On(s->Bat80VCellDivVoltageF,0.45f))
       {
-          s->BAT80VAlarmReg.bit.CellVolt_BL =1;
+          if(s->Bat80VAlarmCont[10]< 100){++s->Bat80VAlarmCont[10];}
+          if(s->Bat80VAlarmCont[10]>=100)
+          {
+              s->BAT80VAlarmReg.bit.CellVolt_BL=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.CellVolt_BL =0;
+          if(s->BAT80VAlarmReg.bit.CellVolt_BL==0)
+          {
+              s->Bat80VAlarmCont[10]=0;
+          }
+          if(Hyst_Off(s->Bat80VCellDivVoltageF,0.32f))
+          {
+              s->Bat80VAlarmCont[10]=0;
+              s->BAT80VAlarmReg.bit.CellVolt_BL=0;
+          }
       }
-      // 셀 과온 Alarm
-      if(s->Bat80VCellMaxTemperatureF >= C_Bat80VOVCellTemperatureAlarm)
+      // 셀 과온 Alarm,유지시간카운터배열값:11,유지시간:100msec
+      if(Hyst_On(s->Bat80VCellMaxTemperatureF,55.0f))
       {
-          s->BAT80VAlarmReg.bit.CellTemp_OV =1;
+          if(s->Bat80VAlarmCont[11]< 100){++s->Bat80VAlarmCont[11];}
+          if(s->Bat80VAlarmCont[11]>=100)
+          {
+              s->BAT80VAlarmReg.bit.CellTemp_OV=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.CellTemp_OV =0;
+          if(s->BAT80VAlarmReg.bit.CellTemp_OV==0)
+          {
+              s->Bat80VAlarmCont[11]=0;
+          }
+          if(Hyst_Off(s->Bat80VCellMaxTemperatureF,52.3f))
+          {
+              s->Bat80VAlarmCont[11]=0;
+              s->BAT80VAlarmReg.bit.CellTemp_OV=0;
+          }
       }
-      // 셀 저온 Alarm
-      if(s->Bat80VCellMinVoltageF <= C_Bat80VUDCellTemperatureAlarm)
+      // 셀 저온 Alarm,유지시간카운터배열값:12,유지시간:100msec
+      if(Hyst_Off(s->Bat80VCellMinVoltageF,-15.0f))
       {
-          s->BAT80VAlarmReg.bit.CellTemp_UN =1;
+          if(s->Bat80VAlarmCont[12]< 100){++s->Bat80VAlarmCont[12];}
+          if(s->Bat80VAlarmCont[12]>=100)
+          {
+              s->BAT80VAlarmReg.bit.CellTemp_UN=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.CellTemp_UN =0;
+          if(s->BAT80VAlarmReg.bit.CellTemp_UN==0)
+          {
+              s->Bat80VAlarmCont[12]=0;
+          }
+          if(Hyst_On(s->Bat80VCellMinVoltageF,0.0f))
+          {
+              s->Bat80VAlarmCont[12]=0;
+              s->BAT80VAlarmReg.bit.CellTemp_UN=0;
+          }
       }
-      // 셀 온도 편차 Alarm
-      if(s->Bat80VCellDivVoltageF >= C_Bat80VDIVCellTemperatureAlarm)
+      // 셀 온도 편차 Alarm,유지시간카운터배열값:13,유지시간:100msec
+      if(Hyst_On(s->Bat80VCellDivTemperatureF,8.0f))
       {
-          s->BAT80VAlarmReg.bit.CellTemp_BL =1;
+          if(s->Bat80VAlarmCont[13]< 100){++s->Bat80VAlarmCont[13];}
+          if(s->Bat80VAlarmCont[13]>=100)
+          {
+              s->BAT80VAlarmReg.bit.CellTemp_BL=1;
+          }
       }
       else
       {
-          s->BAT80VAlarmReg.bit.CellTemp_BL =0;
+          if(s->BAT80VAlarmReg.bit.CellTemp_BL==0)
+          {
+              s->Bat80VAlarmCont[13]=0;
+          }
+          if(Hyst_Off(s->Bat80VCellDivTemperatureF,4.0f))
+          {
+              s->Bat80VAlarmCont[13]=0;
+              s->BAT80VAlarmReg.bit.CellTemp_BL=0;
+          }
       }
+
+
 }
 unsigned int    CellVoltUnBalaneFaulCount=0;
 void Cal80VSysFaultCheck(SystemReg *s)
 {
       // 과전류 FAULT
+      /*
       if(s->Bat80VCurrentAsbF >= C_Bat80VOVPackCurrentFault)
       {
           s->BAPackOCCount++;
@@ -538,6 +776,29 @@ void Cal80VSysFaultCheck(SystemReg *s)
           s->BAPackOCCount=0;
          // s-> BAT80VFaultReg.bit.PackVCT_OV=0;
           s-> BAT80VFaulBuftReg.bit.PackVCT_OV=0;
+      }
+      */
+
+
+      if(s->Bat80VCurrentAsbF >= C_Bat80VOVPackCurrentFault)
+      {
+          s-> BAT80VFaulBuftReg.bit.PackVCT_OV=1;
+          s-> BAT80VFaultReg.bit.PackVCT_OV=1;
+      }
+      if(s->Bat80VCurrentAsbF >= C_Bat80VOVPackOCTimer)
+      {
+          s->BAPackOCCount++;
+          if(s->BAPackOCCount>2000)
+          {
+              s->BAPackOCCount=30000;
+              s-> BAT80VFaultReg.bit.PackOcTime_Err =1;
+            //  s-> BAT80VFaultReg.bit.PrtcOcEvent_Err =0;
+          }
+      }
+      else
+      {
+          s->BAPackOCCount=0;
+          s-> BAT80VFaultReg.bit.PackOcTime_Err =0;
       }
       // 과충전 FAULT
       if(s->Bat80VSOCF >=C_Bat80VOVPackSOCFault)
@@ -588,11 +849,11 @@ void Cal80VSysFaultCheck(SystemReg *s)
       // 팩 과온도 FAULT
       if(s->Bat80VCellAgvTemperatureF >= C_Bat80VOVPackTemperatureFault)
       {
-          //s->BAT80VFaulBuftReg.bit.PackTemp_OV=1;
-          //s->BAT80VFaultReg.bit.PackTemp_OV=1;
+          s->BAT80VFaulBuftReg.bit.PackTemp_OV=1;
+          s->BAT80VFaultReg.bit.PackTemp_OV=1;
       }
       // 팩 저온도 FAULT
-      if(s->Bat80VCellAgvTemperatureF <= C_Bat80VUNPackTemperatureFault)
+      if(s->Bat80VCellAgvTemperatureF <= C_Bat80VUNPackTemperatureFault)  //-30.0 deg C_Bat80VUNPackTemperatureFault
       {
           s->BAT80VFaulBuftReg.bit.PackTemp_UN=1;
           s->BAT80VFaultReg.bit.PackTemp_UN=1;
@@ -649,14 +910,14 @@ void Cal80VSysFaultCheck(SystemReg *s)
       // 셀 과온 FAULT
       if(s->Bat80VCellMaxTemperatureF >= C_Bat80VOVCellTemperatureFault)
       {
-         // s->BAT80VFaulBuftReg.bit.CellTemp_OV =1;
-         // s->BAT80VFaultReg.bit.CellTemp_OV =1;
+          s->BAT80VFaulBuftReg.bit.CellTemp_OV =1;
+          s->BAT80VFaultReg.bit.CellTemp_OV =1;
       }
       // 셀 저온 FAULT
       if(s->Bat80VCellMinVoltageF <= C_Bat80VUDCellTemperatureFault)
       {
-         // s->BAT80VFaulBuftReg.bit.CellTemp_UN =1;
-         // s->BAT80VFaultReg.bit.CellTemp_UN =1;
+          s->BAT80VFaulBuftReg.bit.CellTemp_UN =1;
+          s->BAT80VFaultReg.bit.CellTemp_UN =1;
       }
       // 셀 온도 편차 FAULT
       if(s->Bat80VCellDivVoltageF >= C_Bat80VDIVCellTemperatureFault)
@@ -683,6 +944,7 @@ void Cal80VSysFaultCheck(SystemReg *s)
       {
           s->BAT80VFaulBuftReg.bit.PackRLY_ERR =1;
       }
+
      /* if(s->BAT80VFaulBuftReg.all == 0)
       {
            s->Bat80VFaultStatecount =0;
@@ -694,7 +956,8 @@ void Cal80VSysFaultCheck(SystemReg *s)
       }
       else //(s->BAT80VFaulBuftReg.all != 0)
       {
-        /*   /*
+      */
+        /*
             *  Fault 시간 지연을 위한 count
             *  과전류는 발생 시에는 바로 검출하기 위해 강제로 Count 값을
             */
@@ -825,11 +1088,11 @@ void Cal12VSysAlarmtCheck(SystemReg *s)
       // 과전류 FAULT
       if(s->Bat12VCurrentAsbF >= C_Bat12VOVPackCurrentAlarm)
       {
-          s-> BAT12VAlarmReg.bit.PackVCT_OV=1;
+          s-> BAT12VAlarmReg.bit.PackOC=1;
       }
       else
       {
-          s-> BAT12VAlarmReg.bit.PackVCT_OV=0;
+          s-> BAT12VAlarmReg.bit.PackOC=0;
       }
       // 팩 과충전 Alarm
       if(s->Bat12VSOCF >=C_Bat12VOVPkACKSOCAlarm)

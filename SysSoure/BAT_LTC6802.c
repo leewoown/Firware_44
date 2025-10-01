@@ -36,10 +36,23 @@ extern int LTC6804_DieTemperatureRead(int pack_id, float *temperature);
 extern void SPI_Write(unsigned int WRData);
 extern unsigned int SPI_Read(void);
 extern int SlaveBMSIint(SlaveReg *s);
-extern int SlaveBMSDigiteldoutOHandler(SlaveReg *P);
+
+extern void SlaveBMSDigiteldoutOHandler(SlaveReg *P);
+extern void SalveTempsHandler(SlaveReg *s);
+
 extern void SalveTempsVoltHandler(SlaveReg *s);
 extern void SalveTempsVoltHandler_B(SlaveReg *s);
 extern void SlaveVoltagHandler(SlaveReg *s);
+void SlaveBMSInit(SlaveReg *s)
+{
+   // unsigned int     CellTemperatureADC[12];
+   // unsigned int     CellTemperatureNor[12];
+   // float32          CellTemperatureVF[12];
+   // float32          CellTemperatureF[12];
+   // float32          CellTemperatureFBuf[12];
+   // int              CellTemperatureBuf[12];
+   // int              CellTemperature[12];
+}
 void BAT_InitSPI(void)
 {
     //  Uint16 i;
@@ -338,6 +351,7 @@ int SlaveBMSIint(SlaveReg *s)
     s->GPIORef=0;
     return 0;
 }
+/*
 int SlaveBMSDigiteldoutOHandler(SlaveReg *P)
 {
     int ret;
@@ -423,8 +437,238 @@ int SlaveBMSDigiteldoutOHandler(SlaveReg *P)
     ret=LTC6804_write_cmd(P->ID,LTC6804_CMD_WRCFG,CommandBuf,sizeof(CommandBuf));
     return ret;
 }
+*/
+void SlaveBMSDigiteldoutOHandler(SlaveReg *P)
+{
+   // int ret;
+    char CommandBuf[6];
+    // 0xfc,       // GPIOx : pull down off, Ref ON, SWTEN, ADCOPT=0
+    //int LTC6804_write_cmd(char address, short command, char data[], int len)
+    P->BATICDO.bit.ADCCOPT=0;
+    P->BATICDO.bit.SWTRD=0;
+    P->BATICDO.bit.REFON =1;
+    P->TempsChSeletCount++;
 
-void SalveTempsVoltHandler_B(SlaveReg *s)
+    if(P->TempsChSeletCount>12){P->TempsChSeletCount=0;}
+    switch (P->TempsChSeletCount)
+    {
+
+        case 0 :
+                  P->BATICDO.bit.GPIO1=1;
+
+                  P->BATICDO.bit.GPIO2=0;
+                  P->BATICDO.bit.GPIO3=0;
+                  P->BATICDO.bit.GPIO4=0;
+                  P->BATICDO.bit.GPIO5=0;
+                  P->TempsChSelet =5;
+
+         break;
+         case 1 :
+                 P->BATICDO.bit.GPIO1=1; //1
+
+                 P->BATICDO.bit.GPIO2=1;
+                 P->BATICDO.bit.GPIO3=0;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=0;
+                  P->TempsChSelet =6;
+         break;
+         case 2 :
+
+                 P->BATICDO.bit.GPIO1=1; //2
+
+                 P->BATICDO.bit.GPIO2=0;
+                 P->BATICDO.bit.GPIO3=1;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=0;
+                 P->TempsChSelet =7;
+
+         break;
+         case 3 :
+
+                 P->BATICDO.bit.GPIO1=1; //3
+
+                 P->BATICDO.bit.GPIO2=1;
+                 P->BATICDO.bit.GPIO3=1;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=0;
+                 P->TempsChSelet =8;
+
+         break;
+         case 4 :
+
+                 P->BATICDO.bit.GPIO1=1; //4
+
+                 P->BATICDO.bit.GPIO2=0;
+                 P->BATICDO.bit.GPIO3=0;
+                 P->BATICDO.bit.GPIO4=1;
+                 P->BATICDO.bit.GPIO5=0;
+                 P->TempsChSelet =9;
+         break;
+         case 5 :
+
+                 P->BATICDO.bit.GPIO1=1; //5
+
+                 P->BATICDO.bit.GPIO2=1;
+                 P->BATICDO.bit.GPIO3=0;
+                 P->BATICDO.bit.GPIO4=1;
+                 P->BATICDO.bit.GPIO5=0;
+                 P->TempsChSelet =10;
+         break;
+         case 6 :
+
+                 P->BATICDO.bit.GPIO1=1; //6
+
+                 P->BATICDO.bit.GPIO2=0;
+                 P->BATICDO.bit.GPIO3=1;
+                 P->BATICDO.bit.GPIO4=1;
+                 P->BATICDO.bit.GPIO5=0;
+                 P->TempsChSelet =11;
+         break;
+         case 7 :
+
+                 P->BATICDO.bit.GPIO1=1; //7
+
+                 P->BATICDO.bit.GPIO2=1;
+                 P->BATICDO.bit.GPIO3=1;
+                 P->BATICDO.bit.GPIO4=1;
+                 P->BATICDO.bit.GPIO5=0;
+                 P->TempsChSelet =0;
+         break;
+         case 8 :
+
+                 P->BATICDO.bit.GPIO1=1; //8
+
+                 P->BATICDO.bit.GPIO2=0;
+                 P->BATICDO.bit.GPIO3=0;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=1;
+                 P->TempsChSelet =1;
+         break;
+         case 9 :
+
+                 P->BATICDO.bit.GPIO1=1; //9
+
+                 P->BATICDO.bit.GPIO2=1;
+                 P->BATICDO.bit.GPIO3=0;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=1;
+                 P->TempsChSelet =2;
+         break;
+         case 10 :
+
+                 P->BATICDO.bit.GPIO1=1; //10
+
+                 P->BATICDO.bit.GPIO2=0;
+                 P->BATICDO.bit.GPIO3=1;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=1;
+                 P->TempsChSelet =3;
+         break;
+         case 11 :
+
+                 P->BATICDO.bit.GPIO1=1; //11
+
+                 P->BATICDO.bit.GPIO2=1;
+                 P->BATICDO.bit.GPIO3=1;
+                 P->BATICDO.bit.GPIO4=0;
+                 P->BATICDO.bit.GPIO5=1;
+                 P->TempsChSelet =4;
+         break;
+         default :
+         break;
+
+    }
+
+    CommandBuf[0] = (char) P->BATICDO.all;
+    CommandBuf[1] = 0x00;
+    CommandBuf[2] = 0x00;
+    CommandBuf[3] = 0x00;
+    CommandBuf[4] = 0x00;
+    CommandBuf[5] = 0x00;
+
+    P->Error=LTC6804_write_cmd(P->ID,LTC6804_CMD_WRCFG,CommandBuf,sizeof(CommandBuf));
+
+    if(P->Error==1)
+    {
+        P->ErrorCountB=0;
+    }
+    else
+    {
+        P->ErrorCountB++;
+    }
+    if(P->ErrorCountB>200)
+    {
+        P->ErrorCountB=250;
+    }
+}
+
+void SalveTempsHandler(SlaveReg *s)
+{
+    float32 TempsAVaule=0;
+    float32 TempsBVaule=0;
+    float32 TempsCVaule=0;
+    float32 TempsDVaule=0;
+    float32 TempsAVaule3X=0;
+    float32 TempsBVaule2X=0;
+    float32 TempsCVaule1X=0;
+    float32 TempsDVaule0x=0;
+    float32 TempsVaule =0;
+
+    s->Error  = LTC6804_write_cmd(s->ID,LTC6804_CMD_ADAX |(1 << 8)|(0 << 4)|(0 << 0),0,0);
+    if(s->Error==1)
+    {
+        s->ErrorCountC=0;
+    }
+    else
+    {
+        s->ErrorCountC++;
+    }
+    s->Error  = LTC6804_read_cmd(s->ID,LTC6804_CMD_RDAUXA, s->ADCV,6);
+    if(s->Error==1)
+    {
+        s->ErrorCountC=0;
+        s->CellTemperatureADC[s->TempsChSelet] = ((s->ADCV[1] << 8) & 0xff00) | (s->ADCV[0]  & 0x00ff);//GPIO1
+        s->CellTemperatureNor[s->TempsChSelet] = s->CellTemperatureADC[s->TempsChSelet]/10;
+        s->CellTemperatureVF [s->TempsChSelet] = (float32)(s->CellTemperatureNor[s->TempsChSelet]*0.001);
+
+       // s->CellTemperatureADC[1]             =((s->ADCV[3] << 8) & 0xff00) | (s->ADCV[2]  & 0x00ff);//GPIO2
+       // s->CellTemperatureADC[2]             =((s->ADCV[5] << 8) & 0xff00) | (s->ADCV[4]  & 0x00ff);//GPIO3
+    }
+    s->Error  = LTC6804_read_cmd(s->ID,LTC6804_CMD_RDAUXB, s->ADCV, 6);
+    if(s->Error==1)
+    {
+        s->ErrorCountC=0;
+      //  s->CellTemperatureADC[3]               =((s->ADCV[1] << 8) & 0xff00) | (s->ADCV[0]  & 0x00ff);//GPIO4
+      //  s->CellTemperatureADC[s->TempsChSelet] =((s->ADCV[3] << 8) & 0xff00) | (s->ADCV[2]  & 0x00ff);//GPIO5
+        s->GPIORef                               =((s->ADCV[5] << 8) & 0xff00) | (s->ADCV[4]  & 0x00ff);//Ref
+    }
+    else
+    {
+        s->ErrorCountC++;
+    }
+    TempsAVaule3X = (s->CellTemperatureVF [s->TempsChSelet]*s->CellTemperatureVF [s->TempsChSelet])*s->CellTemperatureVF [s->TempsChSelet];
+    TempsAVaule = C_TempsAGain*TempsAVaule3X;
+
+    TempsBVaule2X = s->CellTemperatureVF [s->TempsChSelet]*s->CellTemperatureVF [s->TempsChSelet];
+    TempsBVaule = C_TempsBGain*TempsBVaule2X;
+
+    TempsCVaule1X = s->CellTemperatureVF [s->TempsChSelet];
+    TempsCVaule = C_TempsCGain*TempsCVaule1X;
+
+    TempsDVaule0x = C_TempsDGain;
+    TempsDVaule = TempsDVaule0x;
+
+    TempsVaule = TempsAVaule+TempsBVaule+TempsCVaule+TempsDVaule;
+    s->CellTemperatureFBuf[s->TempsChSelet]= TempsVaule;
+    s->CellTemperatureBuf[s->TempsChSelet] =(int)(TempsVaule*10);
+    if(s->TempsChSelet==0)
+    {
+        memcpy(&s->CellTemperatureF[0], &s->CellTemperatureFBuf[0],sizeof(float32)*12);
+        memcpy(&s->CellTemperature[0],  &s->CellTemperatureBuf[0], sizeof(int)*12);
+    }
+
+}
+void SalveTempsVoltHandler_B(SlaveReg *s)// Battery IC
 {
     s->CellTemperatureF[0]=s->BatICTempsF-5.2;
     s->CellTemperatureF[1]=s->BatICTempsF-5.2;
@@ -441,7 +685,7 @@ void SalveTempsVoltHandler_B(SlaveReg *s)
     s->CellTemperature[5]=(int)(s->BatICTempsF*10);
 
 }
-void SalveTempsVoltHandler(SlaveReg *s)
+void SalveTempsVoltHandler(SlaveReg *s)// Battery IC
 {
     float32 TempsAVaule=0;
     float32 TempsBVaule=0;
@@ -507,41 +751,42 @@ void SalveTempsVoltHandler(SlaveReg *s)
         memcpy(&s->CellTemperature[0],  &s->CellTemperatureBuf[0], sizeof(int)*12);
     }
 }
+
+
 void SlaveVoltagHandler(SlaveReg *s)
 {
     if(s->StateMachine==STATE_BATREAD)
     {
        s->test0 = LTC6804_CMD_ADCV | (1 << 8)|(0 << 4)|(0 << 0);
        s->Error = LTC6804_write_cmd(s->ID,LTC6804_CMD_ADCV | (1 << 8)|(0 << 4)|(0 << 0),0, 0);
-
        if(s->Error==1)
        {
-           s->ErrorCount=0;
+           s->ErrorCountA=0;
        }
        else
        {
-           s->ErrorCount++;
+           s->ErrorCountA++;
        }
        s->Error  = LTC6804_read_cmd(s->ID,LTC6804_CMD_RDCVA, s->ADCX, 6);
        if(s->Error==1)
        {
-           s->ErrorCount=0;
+           s->ErrorCountA=0;
            s->CellVoltageBuf[0]  = ((s->ADCX[1] << 8) & 0xff00) | (s->ADCX[0]  & 0x00ff);
            s->CellVoltageBuf[1]  = ((s->ADCX[3] << 8) & 0xff00) | (s->ADCX[2]  & 0x00ff);
            s->CellVoltageBuf[2]  = ((s->ADCX[5] << 8) & 0xff00) | (s->ADCX[4]  & 0x00ff);
 
-           s->CellVoltage[0]     = s->CellVoltageBuf[2]/10;
-           s->CellVoltage[1]     = s->CellVoltageBuf[2]/10;
+           s->CellVoltage[0]     = s->CellVoltageBuf[0]/10;
+           s->CellVoltage[1]     = s->CellVoltageBuf[1]/10;
            s->CellVoltage[2]     = s->CellVoltageBuf[2]/10;
        }
        else
        {
-           s->ErrorCount++;
+           s->ErrorCountA++;
        }
        s->Error = LTC6804_read_cmd(s->ID,LTC6804_CMD_RDCVB, s->ADCX, 6);
        if(s->Error==1)
        {
-           s->ErrorCount=0;
+           s->ErrorCountA=0;
            s->CellVoltageBuf[3] = ((s->ADCX[1] << 8 & 0xff00)  | (s->ADCX[0]) & 0x00ff);
            s->CellVoltageBuf[4] = ((s->ADCX[3] << 8 & 0xff00)  | (s->ADCX[2]) & 0x00ff);
            s->CellVoltageBuf[5] = ((s->ADCX[5] << 8 & 0xff00)  | (s->ADCX[4]) & 0x00ff);
@@ -551,13 +796,13 @@ void SlaveVoltagHandler(SlaveReg *s)
        }
        else
        {
-           s->ErrorCount++;
+           s->ErrorCountA++;
        }
 
        s->Error = LTC6804_read_cmd(s->ID,LTC6804_CMD_RDCVC, s->ADCX, 6);
        if(s->Error==1)
        {
-           s->ErrorCount=0;
+           s->ErrorCountA=0;
            s->CellVoltageBuf[6] = ((s->ADCX[1] << 8 & 0xff00)  | (s->ADCX[0]) & 0x00ff);
            s->CellVoltageBuf[7] = ((s->ADCX[3] << 8 & 0xff00)  | (s->ADCX[2]) & 0x00ff);
            s->CellVoltageBuf[8] = ((s->ADCX[5] << 8 & 0xff00)  | (s->ADCX[4]) & 0x00ff);
@@ -568,12 +813,12 @@ void SlaveVoltagHandler(SlaveReg *s)
        }
        else
        {
-           s->ErrorCount++;
+           s->ErrorCountA++;
        }
        s->Error = LTC6804_read_cmd(s->ID,LTC6804_CMD_RDCVD, s->ADCX, 6);
        if(s->Error==1)
        {
-           s->ErrorCount=0;
+           s->ErrorCountA=0;
            s->CellVoltageBuf[9]  = ((s->ADCX[1] << 8 & 0xff00)  | (s->ADCX[0]) & 0x00ff);
            s->CellVoltageBuf[10] = ((s->ADCX[3] << 8 & 0xff00)  | (s->ADCX[2]) & 0x00ff);
            s->CellVoltageBuf[11] = ((s->ADCX[5] << 8 & 0xff00)  | (s->ADCX[4]) & 0x00ff);
@@ -584,7 +829,7 @@ void SlaveVoltagHandler(SlaveReg *s)
        }
        else
        {
-           s->ErrorCount++;
+           s->ErrorCountA++;
        }
 
        s->CellVoltageF[0]     = (float32)s->CellVoltage[0]*0.001;  //1
@@ -600,6 +845,10 @@ void SlaveVoltagHandler(SlaveReg *s)
        s->CellVoltageF[10]    = (float32)s->CellVoltage[10]*0.001; //11
        s->CellVoltageF[11]    = (float32)s->CellVoltage[11]*0.001; //11
 
+    }
+    if(s->ErrorCountA>200)
+    {
+        s->ErrorCountA=250;
     }
 }
 int SlaveBmsBalance(SlaveReg *s)
