@@ -222,6 +222,8 @@ void main(void)
                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=0;
                  SysRegs.BAT80VStateReg.bit.BalanceMode=0;
                  SysRegs.BAT80VStateReg.bit.INITOK=0;
+                 CANARegs.BAT80VFaultCT = 0;
+                 SysRegs.Bat80VFaultCurrentF=0.0;
                  /*
                   *
                   */
@@ -724,16 +726,22 @@ interrupt void cpu_timer0_isr(void)
        if(SysRegs.BAT80VAlarmReg.all != 0)
        {
            SysRegs.BAT80VStateReg.bit.SysAalarm=1;
-
        }
        else
        {
            SysRegs.BAT80VStateReg.bit.SysAalarm=0;
        }
+
        Cal80VSysFaultCheck(&SysRegs);
        if(SysRegs.BAT80VFaultReg.all != 0)
        {
+           CANARegs.BAT80VFaultCT = (int)(SysRegs.Bat80VFaultCurrentF*10);
            SysRegs.BAT80VStateReg.bit.SysFault=1;
+
+       }
+       else
+       {
+        //   CANARegs.BAT80VFaultCT =0;
        }
    }
    else
@@ -808,7 +816,7 @@ interrupt void cpu_timer0_isr(void)
                  SysRegs.Bat12VSOHF=100;
                  CANARegs.BAT12VSOH =(unsigned int)(SysRegs.Bat12VSOHF*10);
                 //At 80MHZ, operation time is 0.151msec
-              //   CANATX(0x607,8,CANARegs.BAT12VPT,CANARegs.BAT12VCT,CANARegs.BAT12VSOC,CANARegs.BAT12VSOH );
+                 CANATX(0x607,8,CANARegs.BAT12VPT,CANARegs.BAT12VCT,CANARegs.BAT12VSOC,CANARegs.BAT12VSOH );
                }
        break;
        case 5:
@@ -820,7 +828,7 @@ interrupt void cpu_timer0_isr(void)
                    CANARegs.BAT80VDigitalOutPutReg.bit.PRlyOUT   = PrtectRelayRegs.State.bit.PRelayDO;
                    CANARegs.BAT80VStatus.bit.BalanceEN           = SysRegs.BAT80VStateReg.bit.BalanceMode;
                    CANARegs.BAT80VAh = (int)(SysRegs.Bat80VAhF*10);
-                   CANATX(0x602,8,CANARegs.BAT80VStatus.all,CANARegs.BAT80VDigitalOutPutReg.all,CANARegs.BAT80VAh,0X000);
+                   CANATX(0x602,8,CANARegs.BAT80VStatus.all,CANARegs.BAT80VDigitalOutPutReg.all,CANARegs.BAT80VAh,CANARegs.BAT80VFaultCT);
                }
 
        default :

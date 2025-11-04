@@ -784,6 +784,7 @@ void Cal80VSysFaultCheck(SystemReg *s)
       {
           s-> BAT80VFaulBuftReg.bit.PackVCT_OV=1;
           s-> BAT80VFaultReg.bit.PackVCT_OV=1;
+          s-> Bat80VFaultCurrentF=s->Bat80VCurrentF;
       }
       if(s->Bat80VCurrentAsbF >= C_Bat80VOVPackOCTimer)
       {
