@@ -1,0 +1,31 @@
+# ===== TI Code Composer Studio / C2000 빌드 산출물 =====
+Debug/
+Release/
+*.out
+*.map
+*.obj
+*.o
+*.d
+*.pp
+*.lst
+*.asm.lst
+*_linkInfo.xml
+ccsObjs.opt
+
+# ===== Eclipse / CCS 워크스페이스 캐시 =====
+.metadata/
+.jxbrowser.userdata/
+.launches/
+RemoteSystemsTempFiles/
+
+# ===== OS / 에디터 임시 파일 =====
+Thumbs.db
+desktop.ini
+*~
+*.bak
+*.tmp
+*.swp
+.vscode/
+
+# 참고: 루트의 한글명 *.out 펌웨어 스냅샷은 위 *.out 규칙으로 제외됨.
+#       배포본 보관이 필요하면 git tag 또는 별도 릴리스 아카이브 사용 권장.
