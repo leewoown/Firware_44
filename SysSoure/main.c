@@ -104,7 +104,7 @@ void SalveTempsVoltHandler(SlaveReg *s);
 void SalveTempsVoltHandler_B(SlaveReg *s);
 void TempTemps(SystemReg *s);
 /*
- *  ¿Œ≈Õ∑¥∆Æ «‘ºˆ º±æ
+ *  Ïù∏ÌÑ∞ÎüΩÌä∏ Ìï®Ïàò ÏÑ†Ïñ∏
  */
 interrupt void cpu_timer0_isr(void);
 interrupt void ISR_CANRXINTA(void);
@@ -159,7 +159,7 @@ void main(void)
     EALLOW;  // This is needed to write to EALLOW protected registers
 
     /*
-     *  ¿Œ≈Õ∑¥∆Æ «‘ºˆ º±æ
+     *  Ïù∏ÌÑ∞ÎüΩÌä∏ Ìï®Ïàò ÏÑ†Ïñ∏
      */
     PieVectTable.TINT0 = &cpu_timer0_isr;
     PieVectTable.ECAN0INTA  = &ISR_CANRXINTA;
@@ -318,7 +318,7 @@ void main(void)
                   Farasis52AhSocRegs.CellAgvVoltageF = SysRegs.Bat80VCellAgvVoltageF;
                   CalFarasis52AhSocInit(&Farasis52AhSocRegs);
                   SysRegs.Bat80VSOCF=Farasis52AhSocRegs.SysSocInitF;
-                  //SysRegs.Bat80VSOCF=51; //test ªË¡¶
+                  //SysRegs.Bat80VSOCF=51; //test ÏÇ≠Ï†ú
                   Farasis52AhSocRegs.state= SOC_STATE_RUNNING;
                   /*
                    * BAT12V CELL VOLTATGE, SOC
@@ -848,7 +848,7 @@ interrupt void cpu_timer0_isr(void)
        case 1:
               //LEDSysState_H;
               //At 80MHZ, operation time is 1.29usec
-              //2»£,3 ¬˜∑Æ
+              //2Ìò∏,3 Ï∞®Îüâ
               memcpy(&SysRegs.Bat80VCellVoltageF[0],     &Slave1Regs.CellVoltageF[0],sizeof(float32)*12);
               memcpy(&SysRegs.Bat80VCellVoltageF[12],    &Slave2Regs.CellVoltageF[0],sizeof(float32)*12);
               //LEDSysState_L;

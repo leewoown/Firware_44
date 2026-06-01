@@ -1,9 +1,9 @@
 /* ==============================================================================
-System Name:  Çö´ëÀÚµ¿Â÷ ¼ö¼Ò Áö°ÔÂ÷ 80V
+System Name:  í˜„ëŒ€ìžë™ì°¨ ìˆ˜ì†Œ ì§€ê²Œì°¨ 80V
 
 File Name:		PARAMETER.H
 
-Description:	Çö´ë
+Description:	í˜„ëŒ€
           	    Orientation Control for a Three Phase AC Induction Motor. 
 
 Originator:		Digital control systems Group - Texas Instruments
@@ -24,7 +24,7 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
-/* Bit À§Ä¡ Á¤ÀÇ(ÁÖ·Î À§¿¡¼­ Á¤ÀÇÇÑ ¸ÅÅ©·Î ÇÔ¼ö¿¡¼­ »ç¿ëÇÏ±â À§ÇØ Á¤ÀÇÇÔ) */
+/* Bit ìœ„ì¹˜ ì •ì˜(ì£¼ë¡œ ìœ„ì—ì„œ ì •ì˜í•œ ë§¤í¬ë¡œ í•¨ìˆ˜ì—ì„œ ì‚¬ìš©í•˜ê¸° ìœ„í•´ ì •ì˜í•¨) */
 #define BIT0_POS    	0
 #define BIT1_POS    	1
 #define BIT2_POS    	2
@@ -42,7 +42,7 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 #define BIT14_POS   	14
 #define BIT15_POS   	15
 
-/* Bit Mask Data Á¤ÀÇ */
+/* Bit Mask Data ì •ì˜ */
 #define	BIT0_MASK    	0x0001
 #define	BIT1_MASK    	0x0002
 #define	BIT2_MASK    	0x0004
@@ -60,7 +60,7 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 #define BIT14_MASK   	0x4000
 #define BIT15_MASK   	0x8000
 
-#define	SCIA_BUFRX		50			// Monstar¿Í ¸ÂÃß¾î¾ß ÇÔ
+#define	SCIA_BUFRX		50			// Monstarì™€ ë§žì¶”ì–´ì•¼ í•¨
 
 #define UL_BYTE(x)		    (x >> 16)
 #define HI_BYTE(x)		    (x >> 8)
@@ -233,15 +233,15 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 -------------------------------------------------------------------------------*/
 #define	SCIA_LSPCLK				(CPUCLK/4)							// Peripheral Low Speed Clock for SCI-A
 #define	SCIA_BAUDRATE			9600L								// SCI-A Baudrate
-#define	SCIA_BRR_VAL			(SCIA_LSPCLK/(8*SCIA_BAUDRATE)-1)	// SCI-A BaudRate ¼³Á¤ Register °ª
+#define	SCIA_BRR_VAL			(SCIA_LSPCLK/(8*SCIA_BAUDRATE)-1)	// SCI-A BaudRate ì„¤ì • Register ê°’
 
 #define	SCIB_LSPCLK				(CPUCLK/4)							// Peripheral Low Speed Clock for SCI-B
 #define	SCIB_BAUDRATE			9600L								// SCI-B Baudrate
-#define	SCIB_BRR_VAL			(SCIB_LSPCLK/(8*SCIB_BAUDRATE)-1)	// SCI-B BaudRate ¼³Á¤ Register °ª
+#define	SCIB_BRR_VAL			(SCIB_LSPCLK/(8*SCIB_BAUDRATE)-1)	// SCI-B BaudRate ì„¤ì • Register ê°’
 
 #define	SCIC_LSPCLK				(CPUCLK/4)							// Peripheral Low Speed Clock for SCI-C
 #define	SCIC_BAUDRATE			9600L								// SCI-C Baudrate
-#define	SCIC_BRR_VAL			(SCIC_LSPCLK/(8*SCIC_BAUDRATE)-1)	// SCI-C BaudRate ¼³Á¤ Register °ª
+#define	SCIC_BRR_VAL			(SCIC_LSPCLK/(8*SCIC_BAUDRATE)-1)	// SCI-C BaudRate ì„¤ì • Register ê°’
 
 /*-------------------------------------------------------------------------------
 Parameter
@@ -252,9 +252,9 @@ Parameter
 #define PIn							-3.14159265358979
 #define PI2							6.283185307
 #define WE							376.9911184
-#define AdcNormalizerBipolar        0.00048828125           // 1 / 4096À¸·Î ³ª´°°ª
-#define AdcNormalizerUnipolar       0.000244140625          // 1 / 2048À¸·Î ³ª´°°ª
-#define AdcNormalizerpolar          0.000322997416          // 1 / 3096À¸·Î ³ª´°°ª
+#define AdcNormalizerBipolar        0.00048828125           // 1 / 4096ìœ¼ë¡œ ë‚˜ëˆ—ê°’
+#define AdcNormalizerUnipolar       0.000244140625          // 1 / 2048ìœ¼ë¡œ ë‚˜ëˆ—ê°’
+#define AdcNormalizerpolar          0.000322997416          // 1 / 3096ìœ¼ë¡œ ë‚˜ëˆ—ê°’
 #define Inverse3					0.333333333			//1/3
 #define InverseSQRT3				0.577350269			//1/root3
 #define SQRT3						1.732050808			//root3
@@ -339,7 +339,7 @@ Parameter
 #define     A_UDPackVoltage        556.8//3.2
 #define     A_OVCellVoltage        4.1
 #define     A_UDCellVoltage        3.2
-#define     A_DIVCellVoltage       0.1    // ÃßÈÄ Cell 100À¸·Î º¹±¸
+#define     A_DIVCellVoltage       0.1    // ì¶”í›„ Cell 100ìœ¼ë¡œ ë³µêµ¬
 #define     A_OVCellTemperature    35.0
 #define     A_UDCellTemperature    5.0
 #define     A_DIVCellTemperature   5.0

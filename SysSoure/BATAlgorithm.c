@@ -106,7 +106,7 @@ void CalFarasis52AhSocInit(SocReg *P)
      P->SOCX1OutF     =   C_Farasis52Ah_SOCX1 * P->SOCX1InF;
      P->SOCbufF       =   P->SOCX2OutF + P->SOCX1OutF + C_Farasis52Ah_SOCX0;
      /*
-      *  º¸°ü¹ý °è»ê½Ä ÇÊ¿äÇÔ
+      *  ë³´ê´€ë²• ê³„ì‚°ì‹ í•„ìš”í•¨
       */
      if((P->SOCbufF >= 0.0)&&(P->SOCbufF < 20.0))
      {
@@ -178,7 +178,7 @@ void CalFarasis52AhSocHandle(SocReg *P)
                      P->SOCbufF       =   P->SOCX2OutF + P->SOCX1OutF + C_Farasis52Ah_SOCX0;
                      P->SOCbufF       =   P->SOCbufF+3.0;
                      /*
-                      *  º¸°ü¹ý °è»ê½Ä ÇÊ¿äÇÔ
+                      *  ë³´ê´€ë²• ê³„ì‚°ì‹ í•„ìš”í•¨
                       */
                      if((P->SOCbufF >= 0.0)&&(P->SOCbufF < 20.0))
                      {
@@ -222,7 +222,7 @@ void CalFarasis52AhSocHandle(SocReg *P)
                      /*
                       *
                       */
-                     P->SysSOCdtF = C_CTSampleTime*C_SocCumulativeTime; // CumulativeTime(1/3600) -> ´©Àû½Ã°£
+                     P->SysSOCdtF = C_CTSampleTime*C_SocCumulativeTime; // CumulativeTime(1/3600) -> ëˆ„ì ì‹œê°„
                      P->SysAhNewF = P->SysSoCCTF * P->SysSOCdtF;
                      P->SysAhF    = P->SysAhNewF + P->SysAhOldF;
                      P->SysAhOldF = P->SysAhF;
@@ -235,10 +235,10 @@ void CalFarasis52AhSocHandle(SocReg *P)
                          P->SysAhF= 52.0;
                      }
                      /*
-                     * SOC º¯È¯
+                     * SOC ë³€í™˜
                      */
-                     P->SysSOCBufF1 = P->SysAhF *C_FarasisP52AhNorm;//0.0125 ;// 1/80 --> 0.0125--> ÀÏ¹ÝÈ­
-                     P->SysSOCBufF2 = P->SysSOCBufF1*100.0; //--> ´ÜÀ§ º¯È¯ %
+                     P->SysSOCBufF1 = P->SysAhF *C_FarasisP52AhNorm;//0.0125 ;// 1/80 --> 0.0125--> ì¼ë°˜í™”
+                     P->SysSOCBufF2 = P->SysSOCBufF1*100.0; //--> ë‹¨ìœ„ ë³€í™˜ %
                      P->SysSOCF     = P->SysSocInitF+P->SysSOCBufF2;
                  }
                  P->state = SOC_STATE_Save;
@@ -629,7 +629,7 @@ void CalFrey60AhSocHandle(SocReg *P)
                           LFPINITFLAG=1;
                       }*/
                       P->SysSocInitF=25.0;
-                      P->SysSOCdtF = C_CTSampleTime*C_SocCumulativeTime; // CumulativeTime(1/3600) -> ´©Àû½Ã°£
+                      P->SysSOCdtF = C_CTSampleTime*C_SocCumulativeTime; // CumulativeTime(1/3600) -> ëˆ„ì ì‹œê°„
                       P->SysAhNewF = P->SysSoCCTF * P->SysSOCdtF;
                       P->SysAhF    = P->SysAhNewF + P->SysAhOldF;
                       P->SysAhOldF = P->SysAhF;
@@ -642,10 +642,10 @@ void CalFrey60AhSocHandle(SocReg *P)
                           P->SysAhF= 52.0;
                       }
                       /*
-                      * SOC º¯È¯
+                      * SOC ë³€í™˜
                       */
                       P->SysSOCBufF1 = P->SysAhF *C_Frey60AhNorm;// 1/48(0.0208)
-                      P->SysSOCBufF2 = P->SysSOCBufF1*100.0; //--> ´ÜÀ§ º¯È¯ %
+                      P->SysSOCBufF2 = P->SysSOCBufF1*100.0; //--> ë‹¨ìœ„ ë³€í™˜ %
                       P->SysSOCF     = P->SysSocInitF+P->SysSOCBufF2;
                   }
                   P->state = SOC_STATE_Save;
