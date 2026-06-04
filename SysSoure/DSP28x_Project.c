@@ -112,9 +112,10 @@ void SysTimerINIT(SystemReg *s)
 }
 void SysVarINIT(SystemReg *s)
 {
-
     s->PMSysCMDResg.all=0;
     s->BAT80VStateReg.all=0;
+    s->BAT80VStateReg.Word.DataH=0;
+    s->BAT80VStateReg.Word.DataH=0;
     s->BAT80VAlarmReg.all=0;
     s->BAT80VFaultReg.all=0;
     s->BAT80VFaulBuftReg.all=0;
@@ -374,24 +375,24 @@ void Cal80VSysTemperatureHandle(SystemReg *s)
 void Cal80VSysCurrentHandle(SystemReg *s)
 {
     long  CurrentCT  = 0;
-    float32 Currentbuf = 0;
+    float32 Currentbuf = 0.0;
     CurrentCT  = s->Bat80VCurrentData.all;
     CurrentCT  =  CurrentCT - 0x80000000;
 
-    Currentbuf        =  ((float)CurrentCT)/1000;          // (mA to A) CAB500 resolution 1mA
+    Currentbuf        =  ((float)CurrentCT)/1000.0;          // (mA to A) CAB500 resolution 1mA
     s->Bat80VCurrentF  = C_CTDirection * Currentbuf;    // Decide Current sensor's direction
 
     if(s->Bat80VCurrentF>=700.0)
     {
         s->Bat80VCurrentF=700.0;
     }
-    if(s->Bat80VCurrentF<=-700.0)
+    if(s->Bat80VCurrentF<=(-700.0))
     {
-        s->Bat80VCurrentF=-700.0;
+        s->Bat80VCurrentF=(-700.0);
     }
-    if(s->Bat80VCurrentF <= 0)
+    if(s->Bat80VCurrentF <= 0.0)
     {
-        s->Bat80VCurrentAsbF =-1.0 * s->Bat80VCurrentF;
+        s->Bat80VCurrentAsbF =(-1.0 * s->Bat80VCurrentF);
     }
     else
     {
@@ -401,9 +402,10 @@ void Cal80VSysCurrentHandle(SystemReg *s)
 }
 void Cal80VSysAlarmtCheck(SystemReg *s)
 {
-
      // 과전류 Alarm,유지시간카운터배열값:0,유지시간;100msec
-     if(Hyst_On(s->Bat80VCurrentAsbF,500.0f))
+     // 26.06.02 Hyst_On(>) -> >= 로 변경: OcTime Fault(>=500)와 경계 일치, 500.0A 에서도 알람 누적
+     //TODOS : [튜닝] 26.06.04, 과전류타임 알람 보호값, ???A 변경 필요, 현재 500.0A로 설정 해제 456A 으로 변경
+     if(s->Bat80VCurrentAsbF >= 400.0f)
      {
           if(s->Bat80VAlarmCont[0]< 100){++s->Bat80VAlarmCont[0];}
           if(s->Bat80VAlarmCont[0]>=100)
@@ -417,7 +419,7 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
           {
               s->Bat80VAlarmCont[0]=0;
           }
-          if(Hyst_Off(s->Bat80VCurrentAsbF,456.0f))
+          if(Hyst_Off(s->Bat80VCurrentAsbF,300.0f))
           {
               s->Bat80VAlarmCont[0]=0;
               s->BAT80VAlarmReg.bit.PackOC=0;
@@ -760,34 +762,36 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
 unsigned int    CellVoltUnBalaneFaulCount=0;
 void Cal80VSysFaultCheck(SystemReg *s)
 {
-
-
-      if(s->Bat80VCurrentAsbF >= 506.0f)
+    
+     //TODOS : [검증] 26.06.04 과전류 506A(ABS)를 500A 로 변경
+      if(s->Bat80VCurrentAsbF >= 500.0f)
       {
           s-> BAT80VFaulBuftReg.bit.PackVCT_OV=1;
           s-> BAT80VFaultReg.bit.PackVCT_OV=1;
           s-> Bat80VFaultCurrentF=s->Bat80VCurrentF;
       }
-      if(s->Bat80VCurrentAsbF >= C_Bat80VOVPackOCTimer)
-      {
-          s->BAPackOCCount++;
-          if(s->BAPackOCCount>2000)
-          {
-              s->BAPackOCCount=2001;
-              s-> BAT80VFaultReg.bit.PackOcTime_Err =1;
-          }
-      }
-      else
-      {
-          s->BAPackOCCount=0;
-          s-> BAT80VFaultReg.bit.PackOcTime_Err =0;
-      }
+      //TODOS : [주석] 26.06.04, 과전류타임 Fault 기능 삭제, 대신에 과전류 설정값을 절대값 500A
+//      if(s->Bat80VCurrentAsbF > C_Bat80VOVPackOCTimer)
+//      {
+//          s->BAPackOCCount++;
+//          if(s->BAPackOCCount>2000)
+//          {
+//              s-> BAPackOCCount=2001;                    // 오버플로 방지 클램프
+//              s-> BAT80VFaultReg.bit.PackOcTime_Err =1;  // Fault set (래치)
+//          }
+//      }
+//      else
+//      {
+//          // 26.06.02 카운터만 리셋. PackOcTime_Err 은 해제하지 않음(래치)
+//          // → 트립 후 전류가 감소해도 Fault 유지, PrtctReset 에서만 해제
+//          s->BAPackOCCount=0;
+//      }
+
       // 과충전 FAULT
       if(s->Bat80VSOCF >=101.0)
       {
           s->BAT80VFaulBuftReg.bit.PackVSOC_OV =1;
           s->BAT80VFaultReg.bit.PackVSOC_OV=1;
-
       }
       // 저충전 FAULT
       if(s->Bat80VSOCF <= -0.1)
@@ -911,7 +915,6 @@ void Cal80VSysFaultCheck(SystemReg *s)
               s->BAT80VFaultReg.bit.CellTemp_BL =1;
               s->BACellUBTCount=C_Bat80VDIVCellTemperatureFaultDelay+10;
           }
-
       }
       else
       {
@@ -926,7 +929,6 @@ void Cal80VSysFaultCheck(SystemReg *s)
       {
          // s->BAT80VFaulBuftReg.bit.PackRLY_ERR =1;
       }
-
 
 }
 void Cal12VSysVoltageHandle(SystemReg *s)

@@ -111,9 +111,9 @@ interrupt void ISR_CANRXINTA(void);
 //interrupt void cpu_timer2_isr(void);
 
 SystemReg       SysRegs;
-float32 randomCT=0;
-float32 randomA=0;
-float32 randomC=0;
+float32         randomCT=0;
+float32         randomA=0;
+float32         randomC=0;
 PrtectRelayReg  PrtectRelayRegs;
 SlaveReg        Slave1Regs;
 SlaveReg        Slave2Regs;
@@ -128,7 +128,8 @@ float32         LFPsocTestVCT =0.0;
 float32         Slave1Temps=0;
 float32         Slave2Temps=0;
 float32         Slave3Temps=0;
-unsigned int    ProtectRelayCyle=0;
+// TODOS : [검증] 26.06.02 Fault 발생 시, PrtctReset 시 플래그 리셋
+//unsigned int    ProtectRelayCyle=0;
 unsigned int LFPINITFLAG=1;
 //extern unsigned int    CellVoltUnBalaneFaulCount=0;
 void main(void)
@@ -409,19 +410,17 @@ void main(void)
                  SysRegs.BAT12VStateReg.bit.SysSTATE = 2;
                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=1;
                  SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=0;
+                 // TODOS : [검증] 26.06.02 Fault 밠생 시, SysRegs.BAT80VStateReg.bit.SysSTATE=4 전이 및 전송이 되지 않음
                  if(SysRegs.BAT80VStateReg.bit.SysAalarm==1)
                  {
                      SysRegs.BAT80VStateReg.bit.SysSTATE = 3;
                      SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=1;
                  }
-                 if(SysRegs.BAT12VStateReg.bit.SysFault==1)
+                 if(SysRegs.BAT80VStateReg.bit.SysFault==1)
                  {
-                     SysRegs.BAT12VStateReg.bit.SysSTATE = 4;
+                     SysRegs.BAT80VStateReg.bit.SysSTATE = 4;
                      SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=1;
                  }
-                 /*
-                  *
-                  */
                  if(CANARegs.PMSCMDRegs.bit.RUNStatus==0)
                  {
                      PrtectRelayRegs.State.bit.WakeUpEN=0;
@@ -432,7 +431,7 @@ void main(void)
                  {
                      SysRegs.SysMachine=System_STATE_PROTECTER;
                  }
-              //   ProtecLatchRelayHandle(&PrtectRelayRegs);
+                 // ProtecLatchRelayHandle(&PrtectRelayRegs);
             break;
             case System_STATE_PROTECTER:
                  SysRegs.BAT80VStateReg.bit.SysSTATE =4;
@@ -442,13 +441,16 @@ void main(void)
                      ProtectRelayHandle(&PrtectRelayRegs);
                    // SysRegs.SysMachine=System_STATE_STANDBY;
                  }
+                 // TODOS : [검증] 26.06.04 Fault 발생 시, PrtctReset 시 플래그 리셋 및 보호 플래그 리셋 후, SysRegs.SysMachine=System_STATE_READY 전이 및 전송이 되는지 확인
                  if(CANARegs.PMSCMDRegs.bit.PrtctReset==1)
                  {
                      CANARegs.PMSCMDRegs.bit.PrtctReset=0;
                      SysRegs.BAT80VFaultReg.all=0;
                      SysRegs.BAT80VFaulBuftReg.all=0;
-                     SysRegs.BAT80VFaultReg.all=0;
                      SysRegs.BAT80VStateReg.bit.SysFault=0;
+                     //TODO: [검증] 26.06.02 Fault 후 PrtctReset 시 보호 플래그 재무장 (ProtectRelayCyle/WakeUpState)
+                     PrtectRelayRegs.State.bit.ProtectRelayCyle=0;   // ★ 추가: 다음 Fault 대비 재무장
+                     PrtectRelayRegs.State.bit.WakeUpState=0;        // ★ 추가: 물리 OFF 상태와 플래그 일치
                      delay_ms(200);
                      SysRegs.SysMachine=System_STATE_READY;
                      //SysRegs.BAT80VStateReg.bit.SysSTATE=2;
@@ -510,75 +512,33 @@ void main(void)
                    SysRegs.BalanceTimeCount=0;
                 }
             }
+            // TODOS : [검증] 26.06.02 밸런싱 모드 진입 시, BalanceStatStop 플래그 토글 및 밸런싱 정지 전이 확인
             if(SysRegs.BAT80VStateReg.bit.BalanceStatStop==0)
             {
-                /*
-                 *
-                 */
+                // TODOS : [완료] 26.06.02 밸런싱 초기화
                 Slave1Regs.Balance.all = 0x0000;
                 Slave2Regs.Balance.all = 0x0000;
                 Slave3Regs.Balance.all = 0x0000;
                 SlaveBmsBalance(&Slave1Regs);
                 SlaveBmsBalance(&Slave2Regs);
                 SlaveBmsBalance(&Slave3Regs);
-                /*
-                 *
-                 */
-
+                // TODOS : [완료] 26.06.02 SlaveBMS1 셀 전압측정
                 Slave1Regs.ID=BMS_ID_1;
                 SlaveVoltagHandler(&Slave1Regs);
                 delay_ms(1);
-                //Slave1Regs.ErrorCountA
-                //Slave1Regs.ErrorCountB
-                //Slave1Regs.ErrorCountC
-                /*
-                 *
-                 */
+                // TODOS : [완료] 26.06.02 SlaveBMS2 셀 전압측정
                 Slave2Regs.ID=BMS_ID_2;
                 SlaveVoltagHandler(&Slave2Regs);
-              //  delay_ms(1);
-                /*
-                 *
-                 */
-                Slave3Regs.ID=BMS_ID_3;
-                SlaveVoltagHandler(&Slave3Regs);
                 delay_ms(1);
-/*
-                Slave1Regs.ID=BMS_ID_1;
-                Slave1Regs.BATICDO.bit.GPIO1=1;
-                SlaveBMSDigiteldoutOHandler(&Slave1Regs);
-                SalveTempsHandler(&Slave1Regs);
-                delay_ms(1);
-
-                //
-                Slave2Regs.ID=BMS_ID_2;
-                Slave2Regs.BATICDO.bit.GPIO1=1;
-                SlaveBMSDigiteldoutOHandler(&Slave2Regs);
-                SalveTempsHandler(&Slave2Regs);
-                delay_ms(1);
-*/
-
-                //Slave1Regs.BatICTempsF = Slave1Temps;
-                //SalveTempsVoltHandler_B(&Slave1Regs);
-
-                //SalveTempsVoltHandler(&Slave2Regs);
-                //Slave2Regs.BATICDO.bit.GPIO1= ! Slave2Regs.BATICDO.bit.GPIO1;
-                //SlaveBMSDigiteldoutOHandler(&Slave2Regs);
+                // TODOS : [완료] 26.06.02 SlaveBMS3 셀 전압측정
+                //Slave3Regs.ID=BMS_ID_3;
+                //SlaveVoltagHandler(&Slave3Regs);
                 //delay_ms(1);
-
-                // Slave2Regs.BatICTempsF = Slave2Temps;
-               //  SalveTempsVoltHandler_B(&Slave2Regs);
-
-                //Slave3Regs.BATICDO.bit.GPIO1= ! Slave3Regs.BATICDO.bit.GPIO1;
-                //SlaveBMSDigiteldoutOHandler(&Slave3Regs);
-                //SalveTempsVoltHandler(&Slave3Regs);
-
-          //      Slave3Regs.BatICTempsF = Slave3Temps;
-          //      SalveTempsVoltHandler_B(&Slave3Regs);
-          //      delay_ms(1);
             }
+                // TODOS : [검증] 26.06.02 BalanceStatStop 플래그에 따른 밸런싱 제어 시작
             if(SysRegs.BAT80VStateReg.bit.BalanceStatStop==1)
             {
+                // TODOS : [검증] 26.06.02 밸런싱 정지 시, SlaveBMS1~3 밸런싱 위한 셀 선정
                 Slave1Regs.ID=BMS_ID_1;
                 Slave1Regs.SysCellMinVoltage = SysRegs.Bat80VCellMinVoltageF;
                 SlaveVoltagBalaHandler(&Slave1Regs);
@@ -588,70 +548,42 @@ void main(void)
                 Slave2Regs.SysCellMinVoltage = SysRegs.Bat80VCellMinVoltageF;
                 SlaveVoltagBalaHandler(&Slave2Regs);
                 SlaveBmsBalance(&Slave2Regs);
-
             }
-            /*
-             Slave1Regs.BATICDO.bit.GPIO1= ! Slave1Regs.BATICDO.bit.GPIO1;
-             SlaveBMSDigiteldoutOHandler(&Slave1Regs);
-             delay_ms(1);
-             SalveTempsVoltHandler(&Slave1Regs);
-
-             Slave2Regs.BATICDO.bit.GPIO1= ! Slave2Regs.BATICDO.bit.GPIO1;
-             SlaveBMSDigiteldoutOHandler(&Slave2Regs);
-             delay_ms(1);
-
-             SalveTempsVoltHandler(&Slave2Regs);
-             */
-          //  Slave3Regs.CellVoltageF[0]=Slave3Regs.CellVoltageF[0]+0.094;
-          //  Slave3Regs.CellVoltageF[1]=Slave3Regs.CellVoltageF[1]+0.085;
-          //  Slave3Regs.CellVoltageF[2]=Slave3Regs.CellVoltageF[2]+0.082;
-          //  Slave3Regs.CellVoltageF[3]=Slave3Regs.CellVoltageF[3]+0.086;
             SysRegs.CellVoltsampling=0;
-
         }
         if(SysRegs.CellTempssampling>50)
         {
-
              SysRegs.CellTempssampling=0;
-
         }
         if(SysRegs.Maincount>3000){SysRegs.Maincount=0;}
-
-
 
         Slave1Regs.ID=BMS_ID_1;
         Slave1Regs.BATICDO.bit.GPIO1=1;
         SlaveBMSDigiteldoutOHandler(&Slave1Regs);
         SalveTempsHandler(&Slave1Regs);
         delay_ms(1);
-
-
         Slave2Regs.ID=BMS_ID_2;
         Slave2Regs.BATICDO.bit.GPIO1=1;
         SlaveBMSDigiteldoutOHandler(&Slave2Regs);
         SalveTempsHandler(&Slave2Regs);
         delay_ms(1);
-
         Slave3Regs.ID=BMS_ID_3;
         Slave3Regs.BATICDO.bit.GPIO1=1;
         SlaveBMSDigiteldoutOHandler(&Slave3Regs);
         SalveTempsHandler(&Slave3Regs);
         delay_ms(1);
-
-
-
       //  LTC6804_DieTemperatureRead(BMS_ID_1, &Slave1Temps);
       //  LTC6804_DieTemperatureRead(BMS_ID_2, &Slave2Temps);
         LTC6804_DieTemperatureRead(BMS_ID_3, &Slave3Temps);
       //  randValuem =rand();// (float32) rand();
     }
-  /*  if(SysRegs.SysMachine==System_STATE_READY)//||(SysRegs.SysMachine==System_STATE_RUNING)||(SysRegs.SysMachine==System_STATE_PROTECTER))
+    /*  
+    if(SysRegs.SysMachine==System_STATE_READY)//||(SysRegs.SysMachine==System_STATE_RUNING)||(SysRegs.SysMachine==System_STATE_PROTECTER))
     {
         SysRegs.SysMachine=System_STATE_STANDBY;
-    }*/
-
+    }
+    */
 }
-
 interrupt void cpu_timer0_isr(void)
 {
    SysRegs.MainIsr1++;
@@ -739,24 +671,13 @@ interrupt void cpu_timer0_isr(void)
        Cal80VSysFaultCheck(&SysRegs);
        if(SysRegs.BAT80VFaultReg.all != 0)
        {
-
         //   CANARegs.BAT80VFaultCT = (int)(SysRegs.Bat80VFaultCurrentF*10);
-       //    SysRegs.BAT80VStateReg.bit.SysFault=1;
-
-       }
-       else
-       {
-        //   CANARegs.BAT80VFaultCT =0;
+           SysRegs.BAT80VStateReg.bit.SysFault=1;
        }
        if((Slave1Regs.ErrorCountA>=250)||(Slave2Regs.ErrorCountA>=250)||(Slave3Regs.ErrorCountA>=250))
        {
            SysRegs.BAT80VFaultReg.bit.PackISOSPI_Err=1;
        }
-       else
-       {
-           SysRegs.BAT80VFaultReg.bit.PackISOSPI_Err=0;
-       }
-
    }
    else
    {
@@ -779,7 +700,9 @@ interrupt void cpu_timer0_isr(void)
        SysRegs.BAT12VStateReg.bit.SysAalarm=0;
    }
    //Cal12VSysFaultCheck(&SysRegs);
-   if(SysRegs.BAT80VFaultReg.all != 0)
+   // todos : [검증] 26.06.02 12V Fault 발생 시, SysRegs.BAT12VStateReg.bit.SysSTATE=4 전이 및 전송이 되지 않음
+   // toods : [튜닝] SysRegs.BAT80VFaultReg.all-> SysRegs.BAT12VFaultReg.all 변경함 
+   if(SysRegs.BAT12VFaultReg.all != 0)
    {
        SysRegs.BAT12VStateReg.bit.SysFault=1;
        SysRegs.BAT12VStateReg.bit.SysSTATE = 4;
@@ -788,9 +711,6 @@ interrupt void cpu_timer0_isr(void)
    {
        SysRegs.BAT12VStateReg.bit.SysFault=0;
    }
-   /*
-    *
-    */
    switch(SysRegs.SysRegTimer5msecCount)
    {
        case 1:
@@ -900,7 +820,7 @@ interrupt void cpu_timer0_isr(void)
                 //At 80MHZ, operation time is 0.151msec
                if(SysRegs.BAT80VStateReg.bit.CANCOMEnable==1)
                {
-                   CANATX(0x603,8,SysRegs.BAT80VAlarmReg.all,SysRegs.BAT80VFaultReg.Word.DataL,SysRegs.BAT80VFaultReg.Word.DataH,0X000);
+                   CANATX(0x603,8,SysRegs.BAT80VAlarmReg.all,SysRegs.BAT80VFaultReg.Word.DataL,SysRegs.BAT80VFaultReg.Word.DataH,0X0000);
                }
        break;
        case 11:
@@ -969,8 +889,8 @@ interrupt void cpu_timer0_isr(void)
                }
        break;
        case 35:
-           SysRegs.NumA=SysRegs.MainIsr1/300;
-           SysRegs.NumB=(float32)(SysRegs.NumA*0.1);
+                SysRegs.NumA=SysRegs.MainIsr1/300;
+                SysRegs.NumB=(float32)(SysRegs.NumA*0.1);
                if(SysRegs.BAT80VStateReg.bit.CANCOMEnable==1)
                {
 
@@ -1194,10 +1114,8 @@ interrupt void ISR_CANRXINTA(void)
             ECanaRegs.CANRMP.bit.RMP3=1;
         }
     }
-
     ECanaRegs.CANGIF0.all = ECanaRegs.CANGIF0.all;
     ECanaRegs.CANGIF1.all = ECanaRegs.CANGIF1.all;
-
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP9;
 
    // IER |= 0x0100;                  // Enable INT9

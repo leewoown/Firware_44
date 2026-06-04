@@ -28,7 +28,6 @@ Note: In this software, the default inverter is supposed to be DMC1500 board.
 #include "F2806x_Examples.h"    // F2806x Examples Include File
 #include "DSP28x_Project.h"
 
-
 /*
  *
  */
@@ -51,22 +50,25 @@ typedef enum
 }ProtectRelayState;
 
 struct ProtectRelayState_BIT
-{       // bits   description
-    unsigned int     WakeUpEN                    :1; // 0
-    unsigned int     PRelayDI                    :1; // 0
-    unsigned int     NRelayDI                    :1; // 1
-    unsigned int     PreRelayDI                  :1; // 2
-    unsigned int     PRelayDO                    :1; // 3
-    unsigned int     NRelayDO                    :1; // 4
-    unsigned int     PreRelayDO                  :1; // 5
-    unsigned int     LatchRelayOn                :1; // 6
-    unsigned int     LatchRelayOFF               :1; // 7
-    unsigned int     ProtectRelayCyle            :1; // 8
-    unsigned int     STATE09                     :1; // 9
+{       
+    // bits   description
+    // TOOOS : [오류] 260.06.04 수정  STATE09 추석 처리, 유니온 선언 에러
+    unsigned int     WakeUpEN                    :1; // 00
+    unsigned int     PRelayDI                    :1; // 01
+    unsigned int     NRelayDI                    :1; // 02
+    unsigned int     PreRelayDI                  :1; // 03
+    unsigned int     PRelayDO                    :1; // 04
+    unsigned int     NRelayDO                    :1; // 05
+    unsigned int     PreRelayDO                  :1; // 06
+    unsigned int     LatchRelayOn                :1; // 07
+    unsigned int     LatchRelayOFF               :1; // 08
+    unsigned int     ProtectRelayCyle            :1; // 09 // bit8 보호차단 1회성 가드(0:장전/미실행, 1:차단완료). INIT 및 PrtctReset 시 0으로 재장전
+   // TODOS : [검증] 260.06.04 수정  STATE09 추석 처리 
+   // unsigned int     STATE09                   :1; // 10
     unsigned int     STATE10                     :1; // 10
     unsigned int     STATE11                     :1; // 11
     unsigned int     STATE12                     :1; // 12
-    unsigned int     WakeUpState                   :1; // 13
+    unsigned int     WakeUpState                 :1; // 13
     unsigned int     WakeUpSEQERR                :1; // 14
     unsigned int     RlyFaulttSate               :1; // 15
 };

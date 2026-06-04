@@ -121,21 +121,21 @@ struct ParentDeviceCMD_BIT
 {
     // bits   description
    unsigned int     POWEREN                 :1;   // 0
-   unsigned int     SW01                    :1;   // 2
-   unsigned int     SW02                    :1;   // 3
-   unsigned int     SW03                    :1;   // 4
-   unsigned int     SW04                    :1;   // 5
-   unsigned int     SW05                    :1;   // 6
+   unsigned int     SW01                    :1;   // 1
+   unsigned int     SW02                    :1;   // 2
+   unsigned int     SW03                    :1;   // 3
+   unsigned int     SW04                    :1;   // 4
+   unsigned int     SW05                    :1;   // 5
    unsigned int     SW06                    :1;   // 6
    unsigned int     SW07                    :1;   // 7
    unsigned int     SW08                    :1;   // 8
    unsigned int     SW09                    :1;   // 9
-   unsigned int     SW10                    :1;   // 11
-   unsigned int     SW11                    :1;   // 12
-   unsigned int     SW12                    :1;   // 13
-   unsigned int     SW13                    :1;   // 14
-   unsigned int     SW14                    :1;   // 15
-   unsigned int     SW15                    :1;   // 16
+   unsigned int     SW10                    :1;   // 10
+   unsigned int     SW11                    :1;   // 11
+   unsigned int     SW12                    :1;   // 12
+   unsigned int     SW13                    :1;   // 13
+   unsigned int     SW14                    :1;   // 14
+   unsigned int     SW15                    :1;   // 15
 };
 union ParentDeviceCMD_REG
 {
@@ -145,7 +145,7 @@ union ParentDeviceCMD_REG
 
 struct DigitalInPut_BIT
 {       // bits   description
-   unsigned int     IDSW                    :2;   // 0
+   unsigned int     IDSW                    :2;   // 0,1
    unsigned int     PAUX                    :1;   // 2
    unsigned int     NAUX                    :1;   // 3
    unsigned int     CHAAUX                  :1;   // 4
@@ -154,12 +154,12 @@ struct DigitalInPut_BIT
    unsigned int     SW07                    :1;   // 7
    unsigned int     SW08                    :1;   // 8
    unsigned int     SW09                    :1;   // 9
-   unsigned int     SW10                    :1;   // 11
-   unsigned int     SW11                    :1;   // 12
-   unsigned int     SW12                    :1;   // 13
-   unsigned int     SW13                    :1;   // 14
-   unsigned int     SW14                    :1;   // 15
-   unsigned int     SW15                    :1;   // 16
+   unsigned int     SW10                    :1;   // 10
+   unsigned int     SW11                    :1;   // 11
+   unsigned int     SW12                    :1;   // 12
+   unsigned int     SW13                    :1;   // 13
+   unsigned int     SW14                    :1;   // 14
+   unsigned int     SW15                    :1;   // 15
 };
 union DigitalInput_REG
 {
@@ -210,7 +210,7 @@ struct SystemState_BIT
 };
 union SystemState_REG
 {
-   unsigned long     all;
+   unsigned long            all;
    struct Data_WORD        Word;
    struct SystemState_BIT bit;
 };
@@ -230,6 +230,8 @@ struct SystemAlarm_BIT
     unsigned int     CellTemp_OV         :1; // 11
     unsigned int     CellTemp_UN         :1; // 12
     unsigned int     CellTemp_BL         :1; // 13
+    unsigned int     Alarm14             :1; // 14
+    unsigned int     Alarm15             :1; // 15
 
 };
 union SystemAlarm_REG
@@ -260,6 +262,17 @@ struct SystemFault_BIT
     unsigned int     PackVCUCAN_ERR      :1; // 18
     unsigned int     PackOcTime_Err      :1; // 19
     unsigned int     PrtcOcEvent_Err     :1; // 20
+    unsigned int     Fault21             :1; // 21
+    unsigned int     Fault22             :1; // 22
+    unsigned int     Fault23             :1; // 23
+    unsigned int     Fault24             :1; // 24
+    unsigned int     Fault25             :1; // 25
+    unsigned int     Fault26             :1; // 26
+    unsigned int     Fault27             :1; // 27
+    unsigned int     Fault28             :1; // 28
+    unsigned int     Fault29             :1; // 29
+    unsigned int     Fault30             :1; // 30
+    unsigned int     Fault31             :1; // 31
 };
 union SystemFault_REG
 {
@@ -464,10 +477,8 @@ typedef struct
 }TimerReg;
 struct BATStatus_BIT
 {       // bits   description
-    unsigned int     BATStatus       :3; // 0
-    unsigned int     BalanceEN       :1; // 1
-    unsigned int     STATE02         :1; // 2
-    unsigned int     STATE03         :1; // 3
+    unsigned int     BATStatus       :3; // 0,1,2
+    unsigned int     BalanceEN       :1; // 3
     unsigned int     STATE04         :1; // 4
     unsigned int     STATE05         :1; // 5
     unsigned int     STATE06         :1; // 6
@@ -480,6 +491,7 @@ struct BATStatus_BIT
     unsigned int     STATE13         :1; // 13
     unsigned int     STATE14         :1; // 14
     unsigned int     STATE15         :1; // 15
+
 };
 union BATStatus_REG
 {
