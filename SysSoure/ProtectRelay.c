@@ -108,8 +108,6 @@ void ProtectRelayWakeUpHandle(PrtectRelayReg *p)
             p->State.bit.WakeUpState=0;
         }
     }
-
-
 }
 
 void ProtectRelayHandle(PrtectRelayReg *p)

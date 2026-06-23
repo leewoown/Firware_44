@@ -111,9 +111,9 @@ interrupt void ISR_CANRXINTA(void);
 //interrupt void cpu_timer2_isr(void);
 
 SystemReg       SysRegs;
-float32         randomCT=0;
-float32         randomA=0;
-float32         randomC=0;
+float32 randomCT=0;
+float32 randomA=0;
+float32 randomC=0;
 PrtectRelayReg  PrtectRelayRegs;
 SlaveReg        Slave1Regs;
 SlaveReg        Slave2Regs;
@@ -128,8 +128,7 @@ float32         LFPsocTestVCT =0.0;
 float32         Slave1Temps=0;
 float32         Slave2Temps=0;
 float32         Slave3Temps=0;
-// TODOS : [검증] 26.06.02 Fault 발생 시, PrtctReset 시 플래그 리셋
-//unsigned int    ProtectRelayCyle=0;
+unsigned int    ProtectRelayCyle=0;
 unsigned int LFPINITFLAG=1;
 //extern unsigned int    CellVoltUnBalaneFaulCount=0;
 void main(void)
@@ -241,8 +240,8 @@ void main(void)
                  CANARegs.MailBox0RxCount =0;
                  CANARegs.MailBox1RxCount =0;
                  CANARegs.MailBox2RxCount =0;
-           //      CANARegs.CellVoltagteTotalNum=0;
-          //      CANARegs.CellVoltagteStartNum=0;
+           //    CANARegs.CellVoltagteTotalNum=0;
+          //     CANARegs.CellVoltagteStartNum=0;
                  /*
                   *
                   */
@@ -252,7 +251,6 @@ void main(void)
                      Slave1Regs.ErrorCount=0;
                      SlaveBMSIint(&Slave1Regs);
                      Slave1Regs.Balance.all=0x0000;
-
                      memset(&Slave1Regs.CellVoltage[0],3200,12);
                      memset(&Slave1Regs.CellTemperature[0],300,8);
                      Slave1Regs.StateMachine = STATE_BATSTANDBY;
@@ -292,9 +290,9 @@ void main(void)
 
             break;
             case System_STATE_STANDBY:
+                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=0;
                   SysRegs.BAT80VStateReg.bit.SysSTATE = 0;
                   SysRegs.BAT12VStateReg.bit.SysSTATE = 0;
-                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=0;
                   SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=0;
                   SysRegs.BAT80VDigitalOutPutReg.bit.LEDFaultOUT=0;
                   /*
@@ -331,7 +329,6 @@ void main(void)
                   CalFrey60AhSocInit(&Frey60AhSocRegs);
                   SysRegs.Bat12VSOCF=Frey60AhSocRegs.SysSocInitF;
                   Frey60AhSocRegs.state= SOC_STATE_RUNNING;
-
                   /*
                    * CELL temperature measurement
                    */
@@ -343,13 +340,11 @@ void main(void)
                       SalveTempsHandler(&Slave1Regs);
                       delay_ms(1);
 
-
                       Slave2Regs.ID=BMS_ID_2;
                       Slave2Regs.BATICDO.bit.GPIO1=1;
                       SlaveBMSDigiteldoutOHandler(&Slave2Regs);
                       SalveTempsHandler(&Slave2Regs);
                       delay_ms(1);
-
                   }
                 //  memcpy(SysRegs.Bat80VCellTemperatureF,     Slave1Regs.CellTemperatureF,    12u*sizeof(SysRegs.Bat80VCellTemperatureF[0]));
                 //  memcpy(SysRegs.Bat80VCellTemperatureF+12,  Slave2Regs.CellTemperatureF,    12u*sizeof(SysRegs.Bat80VCellTemperatureF[0]));
@@ -362,14 +357,13 @@ void main(void)
                   SysRegs.BAT80VFaulBuftReg.all=0;
                   SysRegs.BAT12VFaulBuftReg.all=0;
                   SysRegs.Bat80VFaultStatecount=0;
-                  SysRegs.BAT80VFaultReg.bit.CellIR_OV=0;
-                  SysRegs.BAT80VFaultReg.bit.PackOcTime_Err =0;
-                  SysRegs.BAT80VFaultReg.bit.PrtcOcEvent_Err =0;
+                  SysRegs.BAT80VFaultReg.bit.Bsa_PrtctCellIr=0;
+                  SysRegs.BAT80VFaultReg.bit.Bsa_PrtctOcTm =0;
+                  SysRegs.BAT80VFaultReg.bit.Bsa_PrtctOcCnt =0;
                   SysRegs.SysMachine=System_STATE_READY;
                   CANATX(0x600,8,CANARegs.SwVerProducttype.all,Product_Voltage,Product_Capacity,CANARegs.BAT80VConfing);
                   SysRegs.BAT80VStateReg.bit.CANCOMEnable=1;
                   SysRegs.BAT80VStateReg.bit.INITOK=1;
-
             break;
             case System_STATE_READY:
                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=1;
@@ -410,17 +404,19 @@ void main(void)
                  SysRegs.BAT12VStateReg.bit.SysSTATE = 2;
                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=1;
                  SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=0;
-                 // TODOS : [검증] 26.06.02 Fault 밠생 시, SysRegs.BAT80VStateReg.bit.SysSTATE=4 전이 및 전송이 되지 않음
                  if(SysRegs.BAT80VStateReg.bit.SysAalarm==1)
                  {
                      SysRegs.BAT80VStateReg.bit.SysSTATE = 3;
                      SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=1;
                  }
-                 if(SysRegs.BAT80VStateReg.bit.SysFault==1)
+                 if(SysRegs.BAT12VStateReg.bit.SysFault==1)
                  {
-                     SysRegs.BAT80VStateReg.bit.SysSTATE = 4;
+                     SysRegs.BAT12VStateReg.bit.SysSTATE = 4;
                      SysRegs.BAT80VDigitalOutPutReg.bit.LEDAlarmOUT=1;
                  }
+                 /*
+                  *
+                  */
                  if(CANARegs.PMSCMDRegs.bit.RUNStatus==0)
                  {
                      PrtectRelayRegs.State.bit.WakeUpEN=0;
@@ -431,7 +427,7 @@ void main(void)
                  {
                      SysRegs.SysMachine=System_STATE_PROTECTER;
                  }
-                 // ProtecLatchRelayHandle(&PrtectRelayRegs);
+              //   ProtecLatchRelayHandle(&PrtectRelayRegs);
             break;
             case System_STATE_PROTECTER:
                  SysRegs.BAT80VStateReg.bit.SysSTATE =4;
@@ -440,19 +436,24 @@ void main(void)
                  {
                      ProtectRelayHandle(&PrtectRelayRegs);
                    // SysRegs.SysMachine=System_STATE_STANDBY;
+                   // SysRegs.SysMachine= System_STATE_INIT;
                  }
-                 // TODOS : [검증] 26.06.04 Fault 발생 시, PrtctReset 시 플래그 리셋 및 보호 플래그 리셋 후, SysRegs.SysMachine=System_STATE_READY 전이 및 전송이 되는지 확인
                  if(CANARegs.PMSCMDRegs.bit.PrtctReset==1)
                  {
                      CANARegs.PMSCMDRegs.bit.PrtctReset=0;
-                     SysRegs.BAT80VFaultReg.all=0;
                      SysRegs.BAT80VFaulBuftReg.all=0;
+                     SysRegs.BAT80VFaultReg.all=0;
                      SysRegs.BAT80VStateReg.bit.SysFault=0;
-                     //TODO: [검증] 26.06.02 Fault 후 PrtctReset 시 보호 플래그 재무장 (ProtectRelayCyle/WakeUpState)
-                     PrtectRelayRegs.State.bit.ProtectRelayCyle=0;   // ★ 추가: 다음 Fault 대비 재무장
-                     PrtectRelayRegs.State.bit.WakeUpState=0;        // ★ 추가: 물리 OFF 상태와 플래그 일치
+                     /*--------------------------------------------------------------
+                      * 26.06.23 : VCU 리셋 후 릴레이 웨이크업 상태(WakeUpState) 미초기화로 팩 재연결 실패
+                      *            → 릴레이 상태 전체 초기화 + STANDBY 경유 클린 재시작으로 변경
+                      *            (SOC 전압재초기화 점프 + STANDBY 구간 ~0.5초 CAN 무송신 허용)
+                      *--------------------------------------------------------------*/
+                     ProtectRelayVarINIT(&PrtectRelayRegs);      // TODOS : [검증] 26.06.23_Note1, 3.26 WakeUpState/ProtectRelayCyle 초기화 (리셋 후 재웨이크업 정상화)
                      delay_ms(200);
-                     SysRegs.SysMachine=System_STATE_READY;
+                     //SysRegs.SysMachine=System_STATE_READY;
+                     SysRegs.SysMachine=System_STATE_STANDBY;   // TODOS : [검증] 26.06.23_Note1, 3.26 STANDBY 경유 재초기화 (SOC 점프 + ~0.5초 CAN 무송신 허용)
+                    // SysRegs.SysMachine=System_STATE_INIT;
                      //SysRegs.BAT80VStateReg.bit.SysSTATE=2;
                  }
                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=1;
@@ -476,9 +477,6 @@ void main(void)
         }
         if(SysRegs.CellVoltsampling>=CellVoltsampling100msec)
         {
-            /*
-             *
-             */
             if(SysRegs.Bat80VCurrentAsbF<=6.0)
             {
                 SysRegs.BalanceModeCount++;
@@ -512,33 +510,75 @@ void main(void)
                    SysRegs.BalanceTimeCount=0;
                 }
             }
-            // TODOS : [검증] 26.06.02 밸런싱 모드 진입 시, BalanceStatStop 플래그 토글 및 밸런싱 정지 전이 확인
             if(SysRegs.BAT80VStateReg.bit.BalanceStatStop==0)
             {
-                // TODOS : [완료] 26.06.02 밸런싱 초기화
+                /*
+                 *
+                 */
                 Slave1Regs.Balance.all = 0x0000;
                 Slave2Regs.Balance.all = 0x0000;
                 Slave3Regs.Balance.all = 0x0000;
                 SlaveBmsBalance(&Slave1Regs);
                 SlaveBmsBalance(&Slave2Regs);
                 SlaveBmsBalance(&Slave3Regs);
-                // TODOS : [완료] 26.06.02 SlaveBMS1 셀 전압측정
+                /*
+                 *
+                 */
+
                 Slave1Regs.ID=BMS_ID_1;
                 SlaveVoltagHandler(&Slave1Regs);
                 delay_ms(1);
-                // TODOS : [완료] 26.06.02 SlaveBMS2 셀 전압측정
+                //Slave1Regs.ErrorCountA
+                //Slave1Regs.ErrorCountB
+                //Slave1Regs.ErrorCountC
+                /*
+                 *
+                 */
                 Slave2Regs.ID=BMS_ID_2;
                 SlaveVoltagHandler(&Slave2Regs);
+              //  delay_ms(1);
+                /*
+                 *
+                 */
+                Slave3Regs.ID=BMS_ID_3;
+                SlaveVoltagHandler(&Slave3Regs);
                 delay_ms(1);
-                // TODOS : [완료] 26.06.02 SlaveBMS3 셀 전압측정
-                //Slave3Regs.ID=BMS_ID_3;
-                //SlaveVoltagHandler(&Slave3Regs);
+/*
+                Slave1Regs.ID=BMS_ID_1;
+                Slave1Regs.BATICDO.bit.GPIO1=1;
+                SlaveBMSDigiteldoutOHandler(&Slave1Regs);
+                SalveTempsHandler(&Slave1Regs);
+                delay_ms(1);
+
+                //
+                Slave2Regs.ID=BMS_ID_2;
+                Slave2Regs.BATICDO.bit.GPIO1=1;
+                SlaveBMSDigiteldoutOHandler(&Slave2Regs);
+                SalveTempsHandler(&Slave2Regs);
+                delay_ms(1);
+*/
+
+                //Slave1Regs.BatICTempsF = Slave1Temps;
+                //SalveTempsVoltHandler_B(&Slave1Regs);
+
+                //SalveTempsVoltHandler(&Slave2Regs);
+                //Slave2Regs.BATICDO.bit.GPIO1= ! Slave2Regs.BATICDO.bit.GPIO1;
+                //SlaveBMSDigiteldoutOHandler(&Slave2Regs);
                 //delay_ms(1);
+
+                // Slave2Regs.BatICTempsF = Slave2Temps;
+               //  SalveTempsVoltHandler_B(&Slave2Regs);
+
+                //Slave3Regs.BATICDO.bit.GPIO1= ! Slave3Regs.BATICDO.bit.GPIO1;
+                //SlaveBMSDigiteldoutOHandler(&Slave3Regs);
+                //SalveTempsVoltHandler(&Slave3Regs);
+
+          //      Slave3Regs.BatICTempsF = Slave3Temps;
+          //      SalveTempsVoltHandler_B(&Slave3Regs);
+          //      delay_ms(1);
             }
-                // TODOS : [검증] 26.06.02 BalanceStatStop 플래그에 따른 밸런싱 제어 시작
             if(SysRegs.BAT80VStateReg.bit.BalanceStatStop==1)
             {
-                // TODOS : [검증] 26.06.02 밸런싱 정지 시, SlaveBMS1~3 밸런싱 위한 셀 선정
                 Slave1Regs.ID=BMS_ID_1;
                 Slave1Regs.SysCellMinVoltage = SysRegs.Bat80VCellMinVoltageF;
                 SlaveVoltagBalaHandler(&Slave1Regs);
@@ -548,12 +588,32 @@ void main(void)
                 Slave2Regs.SysCellMinVoltage = SysRegs.Bat80VCellMinVoltageF;
                 SlaveVoltagBalaHandler(&Slave2Regs);
                 SlaveBmsBalance(&Slave2Regs);
+
             }
+            /*
+             Slave1Regs.BATICDO.bit.GPIO1= ! Slave1Regs.BATICDO.bit.GPIO1;
+             SlaveBMSDigiteldoutOHandler(&Slave1Regs);
+             delay_ms(1);
+             SalveTempsVoltHandler(&Slave1Regs);
+
+             Slave2Regs.BATICDO.bit.GPIO1= ! Slave2Regs.BATICDO.bit.GPIO1;
+             SlaveBMSDigiteldoutOHandler(&Slave2Regs);
+             delay_ms(1);
+
+             SalveTempsVoltHandler(&Slave2Regs);
+             */
+          //  Slave3Regs.CellVoltageF[0]=Slave3Regs.CellVoltageF[0]+0.094;
+          //  Slave3Regs.CellVoltageF[1]=Slave3Regs.CellVoltageF[1]+0.085;
+          //  Slave3Regs.CellVoltageF[2]=Slave3Regs.CellVoltageF[2]+0.082;
+          //  Slave3Regs.CellVoltageF[3]=Slave3Regs.CellVoltageF[3]+0.086;
             SysRegs.CellVoltsampling=0;
+
         }
         if(SysRegs.CellTempssampling>50)
         {
+
              SysRegs.CellTempssampling=0;
+
         }
         if(SysRegs.Maincount>3000){SysRegs.Maincount=0;}
 
@@ -562,28 +622,33 @@ void main(void)
         SlaveBMSDigiteldoutOHandler(&Slave1Regs);
         SalveTempsHandler(&Slave1Regs);
         delay_ms(1);
+
         Slave2Regs.ID=BMS_ID_2;
         Slave2Regs.BATICDO.bit.GPIO1=1;
         SlaveBMSDigiteldoutOHandler(&Slave2Regs);
         SalveTempsHandler(&Slave2Regs);
         delay_ms(1);
+
         Slave3Regs.ID=BMS_ID_3;
         Slave3Regs.BATICDO.bit.GPIO1=1;
         SlaveBMSDigiteldoutOHandler(&Slave3Regs);
         SalveTempsHandler(&Slave3Regs);
         delay_ms(1);
+
+
+
       //  LTC6804_DieTemperatureRead(BMS_ID_1, &Slave1Temps);
       //  LTC6804_DieTemperatureRead(BMS_ID_2, &Slave2Temps);
         LTC6804_DieTemperatureRead(BMS_ID_3, &Slave3Temps);
       //  randValuem =rand();// (float32) rand();
     }
-    /*  
-    if(SysRegs.SysMachine==System_STATE_READY)//||(SysRegs.SysMachine==System_STATE_RUNING)||(SysRegs.SysMachine==System_STATE_PROTECTER))
+  /*  if(SysRegs.SysMachine==System_STATE_READY)//||(SysRegs.SysMachine==System_STATE_RUNING)||(SysRegs.SysMachine==System_STATE_PROTECTER))
     {
         SysRegs.SysMachine=System_STATE_STANDBY;
-    }
-    */
+    }*/
+
 }
+
 interrupt void cpu_timer0_isr(void)
 {
    SysRegs.MainIsr1++;
@@ -596,13 +661,12 @@ interrupt void cpu_timer0_isr(void)
    SysRegs.SysRegTimer1000msecCount++;
    SysRegs.CellVoltsampling++;
    SysRegs.CellTempssampling++;
-   if(SysRegs.SysRegTimer5msecCount   >SysRegTimer5msec)    {SysRegs.SysRegTimer5msecCount=0;}
-   if(SysRegs.SysRegTimer10msecCount  >SysRegTimer10msec)   {SysRegs.SysRegTimer10msecCount=0;}
-   if(SysRegs.SysRegTimer50msecCount  >SysRegTimer50msec)   {SysRegs.SysRegTimer50msecCount=0;}
-   if(SysRegs.SysRegTimer100msecCount >SysRegTimer100msec)  {SysRegs.SysRegTimer100msecCount=0;}
+   if(SysRegs.SysRegTimer5msecCount   >SysRegTimer5msec)     {SysRegs.SysRegTimer5msecCount=0;}
+   if(SysRegs.SysRegTimer10msecCount  >SysRegTimer10msec)    {SysRegs.SysRegTimer10msecCount=0;}
+   if(SysRegs.SysRegTimer50msecCount  >SysRegTimer50msec)    {SysRegs.SysRegTimer50msecCount=0;}
+   if(SysRegs.SysRegTimer100msecCount >SysRegTimer100msec)   {SysRegs.SysRegTimer100msecCount=0;}
    if(SysRegs.SysRegTimer300msecCount >SysRegTimer300msec)   {SysRegs.SysRegTimer300msecCount=0;}
    if(SysRegs.SysRegTimer1000msecCount>SysRegTimer1000msec)  {SysRegs.SysRegTimer1000msecCount=0;}
-
    /*
     * DigitalInput detection
     */
@@ -652,7 +716,6 @@ interrupt void cpu_timer0_isr(void)
    {
        SysRegs.Bat12VSOCF=Frey60AhSocRegs.SysSOCF;
    }
-
    /*
     * 80V Battery Alarm & Fault Check
     */
@@ -667,17 +730,25 @@ interrupt void cpu_timer0_isr(void)
        {
            SysRegs.BAT80VStateReg.bit.SysAalarm=0;
        }
-
        Cal80VSysFaultCheck(&SysRegs);
        if(SysRegs.BAT80VFaultReg.all != 0)
        {
-        //   CANARegs.BAT80VFaultCT = (int)(SysRegs.Bat80VFaultCurrentF*10);
-           SysRegs.BAT80VStateReg.bit.SysFault=1;
+        // CANARegs.BAT80VFaultCT = (int)(SysRegs.Bat80VFaultCurrentF*10);
+          SysRegs.BAT80VStateReg.bit.SysFault=1;
        }
-       if((Slave1Regs.ErrorCountA>=250)||(Slave2Regs.ErrorCountA>=250)||(Slave3Regs.ErrorCountA>=250))
+       else
        {
-           SysRegs.BAT80VFaultReg.bit.PackISOSPI_Err=1;
+        //   CANARegs.BAT80VFaultCT =0;
        }
+       // TODOS : [삭제] 26.06.08 PackISOSPI_Err 삭제 예정 — ISO-SPI 통신 감시 보호 주석처리, 추후 정리
+       //if((Slave1Regs.ErrorCountA>=250)||(Slave2Regs.ErrorCountA>=250)||(Slave3Regs.ErrorCountA>=250))
+       //{
+       //    SysRegs.BAT80VFaultReg.bit.PackISOSPI_Err=1;
+       //}
+       //else
+       //{
+       //    SysRegs.BAT80VFaultReg.bit.PackISOSPI_Err=0;
+       //}
    }
    else
    {
@@ -686,7 +757,6 @@ interrupt void cpu_timer0_isr(void)
        SysRegs.BAT80VStateReg.bit.SysAalarm=0;
        SysRegs.BAT80VStateReg.bit.SysFault=0;
    }
-
    /*
     * 12V Battery Alarm & Fault Check
     */
@@ -700,9 +770,7 @@ interrupt void cpu_timer0_isr(void)
        SysRegs.BAT12VStateReg.bit.SysAalarm=0;
    }
    //Cal12VSysFaultCheck(&SysRegs);
-   // todos : [검증] 26.06.02 12V Fault 발생 시, SysRegs.BAT12VStateReg.bit.SysSTATE=4 전이 및 전송이 되지 않음
-   // toods : [튜닝] SysRegs.BAT80VFaultReg.all-> SysRegs.BAT12VFaultReg.all 변경함 
-   if(SysRegs.BAT12VFaultReg.all != 0)
+   if(SysRegs.BAT12VStateReg.all != 0)
    {
        SysRegs.BAT12VStateReg.bit.SysFault=1;
        SysRegs.BAT12VStateReg.bit.SysSTATE = 4;
@@ -711,6 +779,9 @@ interrupt void cpu_timer0_isr(void)
    {
        SysRegs.BAT12VStateReg.bit.SysFault=0;
    }
+   /*
+    *
+    */
    switch(SysRegs.SysRegTimer5msecCount)
    {
        case 1:
@@ -757,7 +828,8 @@ interrupt void cpu_timer0_isr(void)
                    CANARegs.BAT80VDigitalOutPutReg.bit.PRlyOUT   = PrtectRelayRegs.State.bit.PRelayDO;
                    CANARegs.BAT80VStatus.bit.BalanceEN           = SysRegs.BAT80VStateReg.bit.BalanceMode;
                    CANARegs.BAT80VAh = (int)(SysRegs.Bat80VAhF*10);
-                   CANATX(0x602,8,CANARegs.BAT80VStatus.all,CANARegs.BAT80VDigitalOutPutReg.all,CANARegs.BAT80VAh,CANARegs.BAT80VFaultCT);
+                   //CANATX(0x602,8,CANARegs.BAT80VStatus.all,CANARegs.BAT80VDigitalOutPutReg.all,CANARegs.BAT80VAh,CANARegs.BAT80VFaultCT);
+                   CANATX(0x602,8,CANARegs.BAT80VStatus.all,CANARegs.BAT80VDigitalOutPutReg.all,SysRegs.BAT80VStateReg.Word.DataL,SysRegs.BAT80VStateReg.Word.DataH);
                }
 
        default :
@@ -795,7 +867,6 @@ interrupt void cpu_timer0_isr(void)
        case 30 :
                memcpy(&CANARegs.BAT80VoltageCell[0],     &Slave1Regs.CellVoltage[0],sizeof(Uint16)*12);
                memcpy(&CANARegs.BAT80VoltageCell[12],    &Slave2Regs.CellVoltage[0],sizeof(Uint16)*12);
-
        break;
        case 40 :
 
@@ -803,24 +874,29 @@ interrupt void cpu_timer0_isr(void)
        default :
        break;
    }
-
    switch(SysRegs.SysRegTimer100msecCount)
    {
        case 5:
                 //At 80MHZ, operation time is 0.151msec
+                //TODO : [검토] 26.06.08 CAN 통신 타임아웃 보호 로직 검토 필요 — CAN 통신 타임아웃 보호 로직 추가, 추후 정리
                SysRegs.SysCanRxCount++;
                if(SysRegs.SysCanRxCount>=100)
                {
-                   CANARegs.PMSCMDRegs.bit.RUNStatus=0;
-                   SysRegs.BAT80VFaultReg.bit.PackCAN_ERR=1;
+                   //CANARegs.PMSCMDRegs.bit.RUNStatus=0;              // TODOS : [삭제] 26.06.08 CAN RX 인터럽트 이슈로 삭제함.
+                   //SysRegs.BAT80VFaultReg.bit.Bsa_PrtctCanTmOut=1;   // TODOS : [삭제] 26.06.08 CAN RX 인터럽트 이슈로 삭제함.
+                   SysRegs.BAT80VAlarmReg.bit.PackCanTmOut=1;
                    SysRegs.SysCanRxCount=150;
+               }
+               else
+               {
+                 SysRegs.BAT80VAlarmReg.bit.PackCanTmOut=0;
                }
        break;
        case 8:
                 //At 80MHZ, operation time is 0.151msec
                if(SysRegs.BAT80VStateReg.bit.CANCOMEnable==1)
                {
-                   CANATX(0x603,8,SysRegs.BAT80VAlarmReg.all,SysRegs.BAT80VFaultReg.Word.DataL,SysRegs.BAT80VFaultReg.Word.DataH,0X0000);
+                   CANATX(0x603,8,SysRegs.BAT80VAlarmReg.all,SysRegs.BAT80VFaultReg.Word.DataL,SysRegs.BAT80VFaultReg.Word.DataH,CANARegs.BAT80VAh);
                }
        break;
        case 11:
@@ -889,8 +965,8 @@ interrupt void cpu_timer0_isr(void)
                }
        break;
        case 35:
-                SysRegs.NumA=SysRegs.MainIsr1/300;
-                SysRegs.NumB=(float32)(SysRegs.NumA*0.1);
+           SysRegs.NumA=SysRegs.MainIsr1/300;
+           SysRegs.NumB=(float32)(SysRegs.NumA*0.1);
                if(SysRegs.BAT80VStateReg.bit.CANCOMEnable==1)
                {
 
@@ -908,7 +984,7 @@ interrupt void cpu_timer0_isr(void)
                    CANARegs.CellVoltTxA = (CANARegs.CellVoltTxNum+0<24) ? CANARegs.BAT80VoltageCell[CANARegs.CellVoltTxNum+0] : 0;
                    CANARegs.CellVoltTxB = (CANARegs.CellVoltTxNum+1<24) ? CANARegs.BAT80VoltageCell[CANARegs.CellVoltTxNum+1] : 0;
                    CANARegs.CellVoltTxC = (CANARegs.CellVoltTxNum+2<24) ? CANARegs.BAT80VoltageCell[CANARegs.CellVoltTxNum+2] : 0;
-                   CANATX(0x60C,8,CANARegs.CellVoltTxNum,CANARegs.CellVoltTxA ,CANARegs.CellVoltTxB,CANARegs.CellVoltTxB);
+                   CANATX(0x60C,8,CANARegs.CellVoltTxNum,CANARegs.CellVoltTxA ,CANARegs.CellVoltTxB,CANARegs.CellVoltTxC);
                    CANARegs.CellVoltTxNum +=3;
                    if(CANARegs.CellVoltTxNum>=24)
                    {
@@ -955,6 +1031,10 @@ interrupt void cpu_timer0_isr(void)
                   //  CANARegs.MailBox0RxCount // 80VCT_RXCnt
                   //  CANARegs.MailBox1RxCount // 12VCT_RXCnt
                   //  CANARegs.MailBox2RxCount // VCU_RXCnt
+                     // CANARegs.MailBox0RxCount : ~~ 카운터값임
+                     // CANARegs.MailBox1RxCount : ~~ 카운터값임
+                     // CANARegs.MailBox2RxCount : ~~ 카운터값임
+                     // CANARegs.MailBox3RxCount : ~~ 카운터값임
                     CANARegs.CANTxA = ComBine(CANARegs.MailBox0RxCount,CANARegs.MailBoxRxCount);
                     CANARegs.CANTxB = ComBine(CANARegs.MailBox2RxCount,CANARegs.MailBox1RxCount);
                     CANARegs.CANTxC = SysRegs.SysCanRxCount;
@@ -1038,7 +1118,6 @@ interrupt void cpu_timer0_isr(void)
                   // CANARegs.BatConfParallelSerial.byte.BYTEH= Product_SysCellVauleP;
                    CANATX(0x600,8,CANARegs.SWTypeVer,Product_Voltage,Product_Capacity,CANARegs.BAT80VConfing);
                }
-
        break;
        default :
        break;
@@ -1047,7 +1126,7 @@ interrupt void cpu_timer0_isr(void)
    DigitalOutput(&SysRegs);
 
    //
-   InitECan();
+  // InitECan();
    // Acknowledge this interrupt to receive more interrupts from group 1
 
    if(SysRegs.MainIsr1>3000) {SysRegs.MainIsr1=0;}
@@ -1070,7 +1149,10 @@ interrupt void ISR_CANRXINTA(void)
                 SysRegs.Bat80VCurrentData.byte.CurrentH   = (ECanaMboxes.MBOX0.MDL.byte.BYTE0<<8)|(ECanaMboxes.MBOX0.MDL.byte.BYTE1);
                 SysRegs.Bat80VCurrentData.byte.CurrentL   = (ECanaMboxes.MBOX0.MDL.byte.BYTE2<<8)|(ECanaMboxes.MBOX0.MDL.byte.BYTE3);
             }
-            ECanaRegs.CANRMP.bit.RMP0 = 1;
+            //TODODS
+            ECanaShadow.CANRMP.all = 0;
+            ECanaShadow.CANRMP.bit.RMP0 = 1;
+            ECanaRegs.CANRMP.all = ECanaShadow.CANRMP.all;   // RMP0만 클리어 (0x0001 기록)
         }
         if(ECanaRegs.CANRMP.bit.RMP1==1)
         {
@@ -1081,7 +1163,10 @@ interrupt void ISR_CANRXINTA(void)
                SysRegs.Bat12VCurrentData.byte.CurrentH   = (ECanaMboxes.MBOX1.MDL.byte.BYTE0<<8)|(ECanaMboxes.MBOX1.MDL.byte.BYTE1);
                SysRegs.Bat12VCurrentData.byte.CurrentL   = (ECanaMboxes.MBOX1.MDL.byte.BYTE2<<8)|(ECanaMboxes.MBOX1.MDL.byte.BYTE3);
       //         if(CANRXRegs.MailBox0RxCount>3000)
-               ECanaRegs.CANRMP.bit.RMP1=1;
+               //ECanaRegs.CANRMP.bit.RMP1=1; TODOS : [삭제]    26.06.08 RMP1 클리어 로직 삭제 예정 — RMP1 클리어 로직 삭제, 추후 정리
+               ECanaShadow.CANRMP.all = 0;
+               ECanaShadow.CANRMP.bit.RMP1= 1;
+               ECanaRegs.CANRMP.all = ECanaShadow.CANRMP.all; 
             }
         }
         if(ECanaRegs.CANRMP.bit.RMP2==1)
@@ -1090,32 +1175,41 @@ interrupt void ISR_CANRXINTA(void)
             {
                 CANARegs.MailBox2RxCount++;
                 if(CANARegs.MailBox2RxCount>200){CANARegs.MailBox2RxCount=0;}
-                //CANRXRegs.VCUCMDCount=0;
-                 CANARegs.PMSCMDRegs.all      =  (ECanaMboxes.MBOX2.MDL.byte.BYTE1<<8)|(ECanaMboxes.MBOX2.MDL.byte.BYTE0);
+                 CANARegs.PMSCMDRegs.all       =  (ECanaMboxes.MBOX2.MDL.byte.BYTE1<<8)|(ECanaMboxes.MBOX2.MDL.byte.BYTE0);
                 //CANRXRegs.WORD700_1          =  (ECanaMboxes.MBOX2.MDL.byte.BYTE2<<8)|(ECanaMboxes.MBOX2.MDL.byte.BYTE3);
                 //CANRXRegs.WORD700_2          =  (ECanaMboxes.MBOX2.MDH.byte.BYTE5<<8)|(ECanaMboxes.MBOX2.MDH.byte.BYTE4);
                 //CANRXRegs.WORD700_3          =  (ECanaMboxes.MBOX2.MDH.byte.BYTE7<<8)|(ECanaMboxes.MBOX2.MDH.byte.BYTE6);
                 SysRegs.SysCanRxCount=0;
             }
-            ECanaRegs.CANRMP.bit.RMP2=1;
+           // ECanaRegs.CANRMP.bit.RMP2=1;    // TODOS : [삭제] 26.06.08 RMP2 클리어 로직 삭제 예정 — RMP2 클리어 로직 삭제, 추후 정리
+            ECanaShadow.CANRMP.all = 0;
+            ECanaShadow.CANRMP.bit.RMP2= 1;
+            ECanaRegs.CANRMP.all = ECanaShadow.CANRMP.all;   // RMP0만 클리어 (0x0001 기록)
         }
         if(ECanaRegs.CANRMP.bit.RMP3==1)
         {
             if(ECanaMboxes.MBOX3.MSGID.bit.STDMSGID==0x400)
             {
                 CANARegs.MailBox3RxCount++;
-                if(CANARegs.MailBox3RxCount>3000){CANARegs.MailBox3RxCount=0;}
+                if(CANARegs.MailBox3RxCount>200){CANARegs.MailBox3RxCount=0;}   // #5 롤오버 임계 통일(3000->200)
                 //CANRXRegs.VCUCMDCount=0;
                 //CANRXRegs.PCCMDRegs.all      =  (ECanaMboxes.MBOX3.MDL.byte.BYTE1<<8)|(ECanaMboxes.MBOX3.MDL.byte.BYTE0);
                 //CANRXRegs.WORD700_1          =  (ECanaMboxes.MBOX3.MDL.byte.BYTE2<<8)|(ECanaMboxes.MBOX3.MDL.byte.BYTE3);
                 //CANRXRegs.WORD700_2          =  (ECanaMboxes.MBOX3.MDH.byte.BYTE5<<8)|(ECanaMboxes.MBOX3.MDH.byte.BYTE4);
                 //CANRXRegs.WORD700_3          =  (ECanaMboxes.MBOX3.MDH.byte.BYTE7<<8)|(ECanaMboxes.MBOX3.MDH.byte.BYTE6);
             }
-            ECanaRegs.CANRMP.bit.RMP3=1;
+           // ECanaRegs.CANRMP.bit.RMP3=1; // TODOS : [삭제] 26.06.08 RMP3 클리어 로직 삭제 예정 — RMP2 클리어 로직 삭제, 추후 정리
+            ECanaShadow.CANRMP.all = 0;
+            ECanaShadow.CANRMP.bit.RMP3= 1;
+            ECanaRegs.CANRMP.all = ECanaShadow.CANRMP.all;  
         }
     }
+    // #4 제거: GMIF0/GMIF1(전역 메일박스 인터럽트 플래그)은 RMP 클리어 시 자동 해제됨.
+    //          자기대입은 write-1-to-clear 에러/상태 플래그(WLIF/EPIF/BOIF 등)를
+    //          의도치 않게 클리어해 에러를 가릴 수 있어 제거. ACK는 PIEACK로 처리.
     ECanaRegs.CANGIF0.all = ECanaRegs.CANGIF0.all;
     ECanaRegs.CANGIF1.all = ECanaRegs.CANGIF1.all;
+
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP9;
 
    // IER |= 0x0100;                  // Enable INT9

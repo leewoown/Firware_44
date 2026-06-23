@@ -766,8 +766,8 @@ void Cal80VSysFaultCheck(SystemReg *s)
      //TODOS : [검증] 26.06.04 과전류 506A(ABS)를 500A 로 변경
       if(s->Bat80VCurrentAsbF >= 500.0f)
       {
-          s-> BAT80VFaulBuftReg.bit.PackVCT_OV=1;
-          s-> BAT80VFaultReg.bit.PackVCT_OV=1;
+          s-> BAT80VFaulBuftReg.bit.Bsa_PrtctOc=1;
+          s-> BAT80VFaultReg.bit.Bsa_PrtctOc=1;
           s-> Bat80VFaultCurrentF=s->Bat80VCurrentF;
       }
       //TODOS : [주석] 26.06.04, 과전류타임 Fault 기능 삭제, 대신에 과전류 설정값을 절대값 500A
@@ -777,157 +777,150 @@ void Cal80VSysFaultCheck(SystemReg *s)
 //          if(s->BAPackOCCount>2000)
 //          {
 //              s-> BAPackOCCount=2001;                    // 오버플로 방지 클램프
-//              s-> BAT80VFaultReg.bit.PackOcTime_Err =1;  // Fault set (래치)
+//              s-> BAT80VFaultReg.bit.Bsa_PrtctOcTm =1;  // Fault set (래치)
 //          }
 //      }
-//      else
-//      {
-//          // 26.06.02 카운터만 리셋. PackOcTime_Err 은 해제하지 않음(래치)
-//          // → 트립 후 전류가 감소해도 Fault 유지, PrtctReset 에서만 해제
-//          s->BAPackOCCount=0;
-//      }
-
       // 과충전 FAULT
       if(s->Bat80VSOCF >=101.0)
       {
-          s->BAT80VFaulBuftReg.bit.PackVSOC_OV =1;
-          s->BAT80VFaultReg.bit.PackVSOC_OV=1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctSocH =1;
+         // s->BAT80VFaultReg.bit.Bsa_PrtctSocH=1;
       }
       // 저충전 FAULT
       if(s->Bat80VSOCF <= -0.1)
       {
-          s->BAT80VFaulBuftReg.bit.PackVSOC_UN =1;
-          s->BAT80VFaultReg.bit.PackVSOC_UN =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctSocL =1;
+        //  s->BAT80VFaultReg.bit.Bsa_PrtctSocL =1;
       }
       // 팩 과전압 FAULT
       if(s->Bat80VVoltageF >= 102.7f)
       {
           s->BAPackOVCount++;
-          s->BAT80VFaulBuftReg.bit.PackVolt_OV =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctOv =1;
           if(s->BAPackOVCount>=C_Bat80VOVPackVoltageFaultDelay)
           {
               s->BAPackOVCount=C_Bat80VOVPackVoltageFaultDelay+10;
-              s->BAT80VFaultReg.bit.PackVolt_OV =1;
+              s->BAT80VFaultReg.bit.Bsa_PrtctOv =1;
           }
-
       }
       else
       {
           s->BAPackOVCount=0;
-          s->BAT80VFaulBuftReg.bit.PackVolt_OV =0;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctOv =0;
       }
       // 팩 저전압 FAULT
       if(s->Bat80VVoltageF <= 67.2f)
       {
           s->BAPackUVCount++;
-          s->BAT80VFaulBuftReg.bit.PackVolt_UN =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctUv =1;
           if(s->BAPackUVCount>=C_Bat80VUDPackVoltageFaultDelay)
           {
               s->BAPackUVCount = C_Bat80VUDPackVoltageFaultDelay+10;
-              s->BAT80VFaultReg.bit.PackVolt_UN =1;
+              s->BAT80VFaultReg.bit.Bsa_PrtctUv =1;
           }
       }
       else
       {
           s->BAPackUVCount=0;
-          s->BAT80VFaulBuftReg.bit.PackVolt_UN =0;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctUv =0;
       }
       // 팩 과온도 FAULT
       if(s->Bat80VCellAgvTemperatureF >= 60.0f)
       {
-          s->BAT80VFaulBuftReg.bit.PackTemp_OV=1;
-          s->BAT80VFaultReg.bit.PackTemp_OV=1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctOt=1;
+          s->BAT80VFaultReg.bit.Bsa_PrtctOt=1;
       }
       // 팩 저온도 FAULT
       if(s->Bat80VCellAgvTemperatureF <= -30.0f)  //-30.0 deg C_Bat80VUNPackTemperatureFault
       {
-          s->BAT80VFaulBuftReg.bit.PackTemp_UN=1;
-          s->BAT80VFaultReg.bit.PackTemp_UN=1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctUt=1;
+          s->BAT80VFaultReg.bit.Bsa_PrtctUt=1;
       }
       // 셀 과전압 FAULT
       if(s->Bat80VCellMaxVoltageF >= 4.25f)
       {
           s->BACellOVCount++;
-          s->BAT80VFaulBuftReg.bit.CellVolt_OV =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellOv =1;
           if(s->BACellOVCount>=C_Bat80VOVCellVoltageFaultDelay)
           {
               s->BACellOVCount=C_Bat80VOVCellVoltageFaultDelay+10;
-              s->BAT80VFaultReg.bit.CellVolt_OV =1;
+              s->BAT80VFaultReg.bit.Bsa_PrtctCellOv =1;
           }
       }
       else
       {
           s->BACellOVCount=0;
-          s->BAT80VFaulBuftReg.bit.CellVolt_OV =0;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellOv =0;
       }
       // 셀 저전압 FAULT
       if(s->Bat80VCellMinVoltageF <= 2.80f)
       {
           s->BACellUVCount++;
-          //s->BAT80VFaulBuftReg.bit.CellVolt_UN =1;
+          //s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUv =1;
           if(s->BACellUVCount>=C_Bat80VUDCellVoltageFaultDelay)
           {
               s->BACellUVCount = C_Bat80VUDCellVoltageFaultDelay+10;
-            //  s->BAT80VFaultReg.bit.CellVolt_UN =1;
+            //  s->BAT80VFaultReg.bit.Bsa_PrtctCellUv =1;
           }
       }
       else
       {
           s->BACellUVCount=0;
-          s->BAT80VFaulBuftReg.bit.CellVolt_UN =0;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUv =0;
 
       }
       // 셀 편차 FAULT
       if(s->Bat80VCellDivVoltageF >= 0.5f)
       {
           s->BACellUBVCount++;
-          s->BAT80VFaulBuftReg.bit.CellVolt_BL =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUnbalVlt =1;
           if(s->BACellUBVCount>=C_Bat80VDIVCellVoltageFaultDelay)
           {
               s->BACellUBVCount = C_Bat80VDIVCellVoltageFaultDelay+10;
-              s->BAT80VFaultReg.bit.CellVolt_BL =1;
+              s->BAT80VFaultReg.bit.Bsa_PrtctCellUnbalVlt =1;
           }
       }
       else
       {
           s->BACellUBVCount=0;
-          s->BAT80VFaulBuftReg.bit.CellVolt_BL =0;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUnbalVlt =0;
       }
       // 셀 과온 FAULT
       if(s->Bat80VCellMaxTemperatureF >= 60.0f)
       {
-          s->BAT80VFaulBuftReg.bit.CellTemp_OV =1;
-          s->BAT80VFaultReg.bit.CellTemp_OV =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellOt =1;
+          s->BAT80VFaultReg.bit.Bsa_PrtctCellOt =1;
       }
       // 셀 저온 FAULT
       if(s->Bat80VCellMinVoltageF <= -25.0f)
       {
-          s->BAT80VFaulBuftReg.bit.CellTemp_UN =1;
-          s->BAT80VFaultReg.bit.CellTemp_UN =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUt =1;
+          s->BAT80VFaultReg.bit.Bsa_PrtctCellUt =1;
       }
       // 셀 온도 편차 FAULT
       if(s->Bat80VCellDivVoltageF >= 15.0f)
       {
           s->BACellUBTCount++;
-          s->BAT80VFaulBuftReg.bit.CellTemp_BL =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUnbalTmp =1;
           if(s->BACellUBTCount>C_Bat80VDIVCellTemperatureFaultDelay)
           {
-              s->BAT80VFaultReg.bit.CellTemp_BL =1;
+              s->BAT80VFaultReg.bit.Bsa_PrtctCellUnbalTmp =1;
               s->BACellUBTCount=C_Bat80VDIVCellTemperatureFaultDelay+10;
           }
       }
       else
       {
           s->BACellUBTCount=0;
-          s->BAT80VFaulBuftReg.bit.CellTemp_BL = 0;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUnbalTmp = 0;
       }
       if(s->RelayCheck >=C_RleyCount)
       {
-          s->BAT80VFaulBuftReg.bit.PackRLY_ERR =1;
+          //s->BAT80VFaulBuftReg.bit.Bsa_FltRly =1;
+          //s->BAT80VFaultReg.bit.Bsa_FltRly =1;
       }
       if(s->Bat80VISOResisF>C_IOSresistanceFault)
       {
-         // s->BAT80VFaulBuftReg.bit.PackRLY_ERR =1;
+         // s->BAT80VFaulBuftReg.bit.Bsa_FltRly =1;
       }
 
 }
@@ -1154,66 +1147,66 @@ void Cal12VSysFaultCheck(SystemReg *s)
       // 과전류 FAULT
       if(s->Bat12VCurrentAsbF >= C_Bat12VOVPackCurrentFault)
       {
-          s-> BAT12VFaulBuftReg.bit.PackVCT_OV=1;
+          s-> BAT12VFaulBuftReg.bit.Bsa_PrtctOc=1;
       }
       // 과충전 FAULT
       if(s->Bat12VSOCF >=C_Bat12VOVPackSOCFault)
       {
-          s->BAT12VFaulBuftReg.bit.PackVSOC_OV =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctSocH =1;
       }
       // 저충전 FAULT
       if(s->Bat12VSOCF <= C_Bat12VUDPackSOCFault)
       {
-          s->BAT12VFaulBuftReg.bit.PackVSOC_UN =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctSocL =1;
       }
       // 팩 과전압 FAULT
       if(s->Bat12VVoltageF >= C_Bat12VOVPackVoltageFault)
       {
-          s->BAT12VFaulBuftReg.bit.PackVolt_OV =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctOv =1;
       }
       // 팩 저전압 FAULT
       if(s->Bat12VVoltageF <= C_Bat12VUDPackVoltageFault)
       {
-          s->BAT12VFaulBuftReg.bit.PackVolt_UN =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctUv =1;
       }
       // 팩 과온도 FAULT
       if(s->Bat12VCellAgvTemperatureF >= C_Bat12VOVPackTemperatureFault)
       {
-          s->BAT12VFaulBuftReg.bit.PackTemp_OV=1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctOt=1;
       }
       // 팩 저온도 FAULT
       if(s->Bat12VCellAgvTemperatureF <= C_Bat12VUNPackTemperatureFault)
       {
-          s->BAT12VFaulBuftReg.bit.PackTemp_UN=1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctUt=1;
       }
       // 셀 과전압 FAULT
       if(s->Bat12VCellMaxVoltageF >= C_Bat12VOVCellVoltageFault)
       {
-          s->BAT12VFaulBuftReg.bit.CellVolt_OV =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellOv =1;
       }
       if(s->Bat12VCellMinVoltageF <= C_Bat12VUDCellVoltageFault)
       {
-          s->BAT12VFaulBuftReg.bit.CellVolt_UN =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellUv =1;
       }
       // 셀 편차 FAULT
       if(s->Bat12VCellDivVoltageF >= C_Bat12VDIVCellVoltageFault)
       {
-          s->BAT12VFaulBuftReg.bit.CellVolt_BL =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellUnbalVlt =1;
       }
       // 셀 과온 FAULT
       if(s->Bat12VCellMaxTemperatureF >= C_Bat12VOVCellTemperatureFault)
       {
-          s->BAT12VFaulBuftReg.bit.CellTemp_OV =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellOt =1;
       }
       // 셀 저온 FAULT
       if(s->Bat12VCellMinVoltageF <= C_Bat12VUDCellTemperatureFault)
       {
-          s->BAT12VFaulBuftReg.bit.CellTemp_UN =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellUt =1;
       }
       // 셀 온도 편차 FAULT
       if(s->Bat12VCellDivVoltageF >= C_Bat12VDIVCellTemperatureFault)
       {
-          s->BAT12VFaulBuftReg.bit.CellTemp_BL =1;
+          s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellUnbalTmp =1;
       }
       if(s->BAT12VFaulBuftReg.all == 0)
        {
@@ -1224,7 +1217,7 @@ void Cal12VSysFaultCheck(SystemReg *s)
        }
        if(s->BAT12VFaulBuftReg.all != 0)
        {
-           if( s-> BAT12VFaulBuftReg.bit.PackVCT_OV==1)
+           if( s-> BAT12VFaulBuftReg.bit.Bsa_PrtctOc==1)
            {
                s->Bat12VFaultStatecount=C_Bat12VFaultDelayCount+1;
            }

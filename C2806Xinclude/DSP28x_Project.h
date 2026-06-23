@@ -230,7 +230,7 @@ struct SystemAlarm_BIT
     unsigned int     CellTemp_OV         :1; // 11
     unsigned int     CellTemp_UN         :1; // 12
     unsigned int     CellTemp_BL         :1; // 13
-    unsigned int     Alarm14             :1; // 14
+    unsigned int     PackCanTmOut        :1; // 14 // TODOS : [추가] 26.06.08 CAN 통신 타임아웃 보호 로직 이슈로 추가함. 
     unsigned int     Alarm15             :1; // 15
 
 };
@@ -240,39 +240,43 @@ union SystemAlarm_REG
    struct SystemAlarm_BIT bit;
 };
 struct SystemFault_BIT
-{       // bits   description
-    unsigned int     PackVCT_OV          :1; // 0
-    unsigned int     PackVSOC_OV         :1; // 1
-    unsigned int     PackVSOC_UN         :1; // 2
-    unsigned int     PackVolt_OV         :1; // 3
-    unsigned int     PackVolt_UN         :1; // 4
-    unsigned int     PackTemp_OV         :1; // 5
-    unsigned int     PackTemp_UN         :1; // 6
-    unsigned int     PackUnPWR_BL        :1; // 7
-    unsigned int     CellVolt_OV         :1; // 8
-    unsigned int     CellVolt_UN         :1; // 9
-    unsigned int     CellVolt_BL         :1; // 10
-    unsigned int     CellTemp_OV         :1; // 11
-    unsigned int     CellTemp_UN         :1; // 12
-    unsigned int     CellTemp_BL         :1; // 13
-    unsigned int     CellIR_OV           :1; // 14
-    unsigned int     PackRLY_ERR         :1; // 15
-    unsigned int     PackISOSPI_Err      :1; // 16
-    unsigned int     PackCAN_ERR         :1; // 17
-    unsigned int     PackVCUCAN_ERR      :1; // 18
-    unsigned int     PackOcTime_Err      :1; // 19
-    unsigned int     PrtcOcEvent_Err     :1; // 20
-    unsigned int     Fault21             :1; // 21
-    unsigned int     Fault22             :1; // 22
-    unsigned int     Fault23             :1; // 23
-    unsigned int     Fault24             :1; // 24
-    unsigned int     Fault25             :1; // 25
-    unsigned int     Fault26             :1; // 26
-    unsigned int     Fault27             :1; // 27
-    unsigned int     Fault28             :1; // 28
-    unsigned int     Fault29             :1; // 29
-    unsigned int     Fault30             :1; // 30
-    unsigned int     Fault31             :1; // 31
+{       // FWbit  // CAN bit  스펙 신호명
+    unsigned int     Bsa_PrtctOc            :1; // 0  // CAN16
+    unsigned int     Bsa_PrtctSocH          :1; // 1  // CAN17
+    unsigned int     Bsa_PrtctSocL          :1; // 2  // CAN18
+    unsigned int     Bsa_PrtctOv            :1; // 3  // CAN19
+    unsigned int     Bsa_PrtctUv            :1; // 4  // CAN20
+    unsigned int     Bsa_PrtctOt            :1; // 5  // CAN21
+    unsigned int     Bsa_PrtctUt            :1; // 6  // CAN22
+    unsigned int     Bsa_PrtctUnbalPwr      :1; // 7  // CAN23
+    unsigned int     Bsa_PrtctCellOv        :1; // 8  // CAN24
+    unsigned int     Bsa_PrtctCellUv        :1; // 9  // CAN25
+    unsigned int     Bsa_PrtctCellUnbalVlt  :1; // 10 // CAN26
+    unsigned int     Bsa_PrtctCellOt        :1; // 11 // CAN27
+    unsigned int     Bsa_PrtctCellUt        :1; // 12 // CAN28
+    unsigned int     Bsa_PrtctCellUnbalTmp  :1; // 13 // CAN29
+    unsigned int     Bsa_FltRly             :1; // 14 // CAN30 //  TODOS : DSSP28X_Project.c926 라인 
+    unsigned int     Bsa_PrtctCanTmOut      :1; // 15 // CAN31 //  TODOS : [삭제] 26.06.08 CAN 통신 타임아웃 보호 로직 이슈로 삭제함.
+    unsigned int     Bsa_PrtctCellIr        :1; // 16 // CAN32
+    unsigned int     Bsa_PrtctOcTm          :1; // 17 // CAN33
+    unsigned int     Bsa_PrtctOcCnt         :1; // 18 // CAN34
+    // TODOS : [삭제] 26.06.08 PackISOSPI_Err 삭제 예정 (스펙 외 펌웨어 전용) — 추후 주석 정리
+    //unsigned int     PackISOSPI_Err      :1; // 19 // CAN35
+    unsigned int     Fault19                :1; // 19 // CAN35 (예약, PackISOSPI_Err 자리)
+    // TODOS : [삭제] 26.06.08 PackVCUCAN_ERR 삭제 예정 (스펙 외 펌웨어 전용) — 추후 주석 정리
+    //unsigned int     PackVCUCAN_ERR      :1; // 20 // CAN36
+    unsigned int     Fault20                :1; // 20 // CAN36 (예약, PackVCUCAN_ERR 자리)
+    unsigned int     Fault21                :1; // 21 // CAN37
+    unsigned int     Fault22                :1; // 22 // CAN38
+    unsigned int     Fault23                :1; // 23 // CAN39
+    unsigned int     Fault24                :1; // 24
+    unsigned int     Fault25                :1; // 25
+    unsigned int     Fault26                :1; // 26
+    unsigned int     Fault27                :1; // 27
+    unsigned int     Fault28                :1; // 28
+    unsigned int     Fault29                :1; // 29
+    unsigned int     Fault30                :1; // 30
+    unsigned int     Fault31                :1; // 31
 };
 union SystemFault_REG
 {
