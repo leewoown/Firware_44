@@ -856,11 +856,11 @@ void Cal80VSysFaultCheck(SystemReg *s)
       if(s->Bat80VCellMinVoltageF <= 2.80f)
       {
           s->BACellUVCount++;
-          //s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUv =1;
+          s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUv =1;
           if(s->BACellUVCount>=C_Bat80VUDCellVoltageFaultDelay)
           {
               s->BACellUVCount = C_Bat80VUDCellVoltageFaultDelay+10;
-            //  s->BAT80VFaultReg.bit.Bsa_PrtctCellUv =1;
+              s->BAT80VFaultReg.bit.Bsa_PrtctCellUv =1;
           }
       }
       else
@@ -892,13 +892,15 @@ void Cal80VSysFaultCheck(SystemReg *s)
           s->BAT80VFaultReg.bit.Bsa_PrtctCellOt =1;
       }
       // 셀 저온 FAULT
-      if(s->Bat80VCellMinVoltageF <= -25.0f)
+      //if(s->Bat80VCellMinVoltageF <= -25.0f)
+      if(s->Bat80VCellMinTemperatureF <= -25.0f)   // TODO : [검증] 260623_Note1, 1.027 셀 저온 변수오류 수정(전압F->온도F), 셀 최소온도 <= -25C
       {
           s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUt =1;
           s->BAT80VFaultReg.bit.Bsa_PrtctCellUt =1;
       }
       // 셀 온도 편차 FAULT
-      if(s->Bat80VCellDivVoltageF >= 15.0f)
+      //if(s->Bat80VCellDivVoltageF >= 15.0f)
+      if(s->Bat80VCellDivTemperatureF >= 15.0f)   // TODO : [검증] 260623_Note1, 1.027 셀 온도편차 변수오류 수정(전압편차F->온도편차F), >= 15C
       {
           s->BACellUBTCount++;
           s->BAT80VFaulBuftReg.bit.Bsa_PrtctCellUnbalTmp =1;
