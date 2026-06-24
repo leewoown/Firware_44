@@ -449,11 +449,11 @@ void main(void)
                       *            → 릴레이 상태 전체 초기화 + STANDBY 경유 클린 재시작으로 변경
                       *            (SOC 전압재초기화 점프 + STANDBY 구간 ~0.5초 CAN 무송신 허용)
                       *--------------------------------------------------------------*/
-                     ProtectRelayVarINIT(&PrtectRelayRegs);      // TODOS : [검증] 26.06.23_Note1, 3.26 WakeUpState/ProtectRelayCyle 초기화 (리셋 후 재웨이크업 정상화)
+                     ProtectRelayVarINIT(&PrtectRelayRegs);      // TODOS : [검증] 26.06.23_Note1, System_STATE_INIT->STANDBY 변경 따른 WakeUpState/ProtectRelayCyle 초기화 
                      delay_ms(200);
                      //SysRegs.SysMachine=System_STATE_READY;
-                     SysRegs.SysMachine=System_STATE_STANDBY;   // TODOS : [검증] 26.06.23_Note1, 3.26 STANDBY 경유 재초기화 (SOC 점프 + ~0.5초 CAN 무송신 허용)
-                    // SysRegs.SysMachine=System_STATE_INIT;
+                     SysRegs.SysMachine=System_STATE_STANDBY;    // TODOS : [검증] 26.06.23_Note1, System_STATE_INIT->STANDBY 경유 재초기화 (SOC 점프방지, CAN 무송신 허용)
+                    // SysRegs.SysMachine=System_STATE_INIT;     //   
                      //SysRegs.BAT80VStateReg.bit.SysSTATE=2;
                  }
                  SysRegs.BAT80VStateReg.bit.CANCOMEnable=1;
@@ -1108,7 +1108,6 @@ interrupt void cpu_timer0_isr(void)
    switch(SysRegs.SysRegTimer1000msecCount)
    {
        case 1:
-
                if(SysRegs.BAT80VStateReg.bit.CANCOMEnable==1)
                {
 

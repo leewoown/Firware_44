@@ -784,13 +784,13 @@ void Cal80VSysFaultCheck(SystemReg *s)
       if(s->Bat80VSOCF >=101.0)
       {
           s->BAT80VFaulBuftReg.bit.Bsa_PrtctSocH =1;
-         // s->BAT80VFaultReg.bit.Bsa_PrtctSocH=1;
+         // s->BAT80VFaultReg.bit.Bsa_PrtctSocH=1;     //TODOS : [완료] 26.06.23 과충전 기능 차단 미적용함
       }
       // 저충전 FAULT
       if(s->Bat80VSOCF <= -0.1)
       {
           s->BAT80VFaulBuftReg.bit.Bsa_PrtctSocL =1;
-        //  s->BAT80VFaultReg.bit.Bsa_PrtctSocL =1;
+        //  s->BAT80VFaultReg.bit.Bsa_PrtctSocL =1;   //TODOS : [완료] 26.06.23 저충전 기능 차단 미적용함 
       }
       // 팩 과전압 FAULT
       if(s->Bat80VVoltageF >= 102.7f)

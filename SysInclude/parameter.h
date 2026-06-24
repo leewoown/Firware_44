@@ -288,8 +288,11 @@ Parameter
 #define     Product_SysCellVauleP              1
 #define     Product_Voltage                    879 // 3.664*24
 #define     Product_Capacity                   45  //
-#define     Product_Type                       1   // 25.11.03
-#define     Product_Version                    27  // 26.06.04 과전류 보호 개정(OcTime Fault 삭제, 순시 500A, 알람 400A)
+// TODOS : [완료] 26.06.23 Product_Type : 양산 (1), 시험(0)
+#define     Product_Type                       1   // 
+// TODOS : [완료] 26.06.04 Product_Version 26 -> 과전류 보호 개정(OcTime Fault 삭제, 순시 500A, 알람 400A)
+// TODOS : [완료] 26.06.23 Product_Version 27 변경함 
+#define     Product_Version                    27 
 
 #define     Bat80VSysVoltMax                   1008 //4.2*24
 #define     Bat80VSysVoltMin                   672  //2.8*2.4
