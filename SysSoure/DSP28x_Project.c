@@ -450,6 +450,7 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
       if(Hyst_Off(s->Bat80VSOCF,5.0f))
       {
           if(s->Bat80VAlarmCont[2]< 100){++s->Bat80VAlarmCont[2];}
+          if(s->Bat80VAlarmCont[2]>=100)   // TODO : [검증] 260624_Note1, 1.027 저충전 알람 디바운스 가드 추가(가드없는 즉시set -> 100카운트 후 set)
           {
               s->BAT80VAlarmReg.bit.PackVSOC_UN=1;
           }
@@ -529,54 +530,31 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
               s->BAT80VAlarmReg.bit.PackTemp_OV=0;
           }
       }
-      // 팩 저온 Alarm,유지시간카운터배열값:6,유지시간;100msec
-      if(s->BAT80VStateReg.bit.sysDisChaMode==1)
+      /*--------------------------------------------------------------
+       * 260624 : 팩 저온 알람 모드 게이팅(sysDisChaMode) 제거 — sysDisChaMode가 코드에서
+       *          설정되지 않아(읽기만) 영영 미동작이던 것을 상시 -15C 검사로 변경.
+       *          충/방전 구분은 상위 장치가 통보하므로 BMS 모드 게이팅 불필요.
+       *          (팩 저온 Fault -30C 는 불변)
+       *--------------------------------------------------------------*/
+      // 팩 저온 Alarm (상시 -15C set / 0C 해제, 100ms 디바운스, 모드 무관) 카운터[6]
+      if(Hyst_Off(s->Bat80VCellAgvTemperatureF,-15.0f))   // TODO : [검증] 260624_Note1, 1.027 팩저온 알람 모드게이팅 제거(상시 -15C)
       {
-          if(Hyst_Off(s->Bat80VCellAgvTemperatureF,-15.0f))
+          if(s->Bat80VAlarmCont[6]< 100){++s->Bat80VAlarmCont[6];}
+          if(s->Bat80VAlarmCont[6]>=100)
           {
-              if(s->Bat80VAlarmCont[6]< 100){++s->Bat80VAlarmCont[6];}
-              if(s->Bat80VAlarmCont[6]>=100)
-              {
-                  s->BAT80VAlarmReg.bit.PackTemp_UN=1;
-              }
-          }
-          else
-          {
-              if(s->BAT80VAlarmReg.bit.PackTemp_UN==0)
-              {
-                  s->Bat80VAlarmCont[6]=0;
-              }
-              if(Hyst_On(s->Bat80VCellAgvTemperatureF,0.0f))
-              {
-                  s->Bat80VAlarmCont[6]=0;
-                  s->BAT80VAlarmReg.bit.PackTemp_UN=0;
-              }
+              s->BAT80VAlarmReg.bit.PackTemp_UN=1;
           }
       }
       else
       {
-          if(s->BAT80VStateReg.bit.sysDisChaMode==1)
+          if(s->BAT80VAlarmReg.bit.PackTemp_UN==0)
           {
-              if(Hyst_Off(s->Bat80VCellAgvTemperatureF,-15.0f))
-              {
-                  if(s->Bat80VAlarmCont[6]< 100){++s->Bat80VAlarmCont[6];}
-                  if(s->Bat80VAlarmCont[6]>=100)
-                  {
-                      s->BAT80VAlarmReg.bit.PackTemp_UN=1;
-                  }
-              }
-              else
-              {
-                  if(s->BAT80VAlarmReg.bit.PackTemp_UN==0)
-                  {
-                      s->Bat80VAlarmCont[6]=0;
-                  }
-                  if(Hyst_On(s->Bat80VCellAgvTemperatureF,0.0f))
-                  {
-                      s->Bat80VAlarmCont[6]=0;
-                      s->BAT80VAlarmReg.bit.PackTemp_UN=0;
-                  }
-              }
+              s->Bat80VAlarmCont[6]=0;
+          }
+          if(Hyst_On(s->Bat80VCellAgvTemperatureF,0.0f))
+          {
+              s->Bat80VAlarmCont[6]=0;
+              s->BAT80VAlarmReg.bit.PackTemp_UN=0;
           }
       }
       if(s->BAT80VStateReg.bit.sysDisChaMode==1)
@@ -654,7 +632,8 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
       // 셀 저전압 Alarm,유지시간카운터배열값:9,유지시간:100msec
       if(Hyst_Off(s->Bat80VCellMinVoltageF,2.80f))
       {
-          if(s->Bat80VAlarmCont[9]< 100){++s->Bat80VAlarmCont[8];}
+          //if(s->Bat80VAlarmCont[9]< 100){++s->Bat80VAlarmCont[8];}
+          if(s->Bat80VAlarmCont[9]< 100){++s->Bat80VAlarmCont[9];}   // TODO : [검증] 260624_Note1, 1.027 셀저전압 알람 카운터 인덱스 수정(Cont[8]->Cont[9]), 영영 미동작 해결
           if(s->Bat80VAlarmCont[9]>=100)
           {
               s->BAT80VAlarmReg.bit.CellVolt_UN=1;
@@ -715,7 +694,8 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
           }
       }
       // 셀 저온 Alarm,유지시간카운터배열값:12,유지시간:100msec
-      if(Hyst_Off(s->Bat80VCellMinVoltageF,-15.0f))
+      //if(Hyst_Off(s->Bat80VCellMinVoltageF,-15.0f))
+      if(Hyst_Off(s->Bat80VCellMinTemperatureF,-15.0f))   // TODO : [검증] 260624_Note1, 1.027 셀저온 알람 변수오류 수정(전압F->온도F), 영영 미동작 해결
       {
           if(s->Bat80VAlarmCont[12]< 100){++s->Bat80VAlarmCont[12];}
           if(s->Bat80VAlarmCont[12]>=100)
@@ -729,7 +709,8 @@ void Cal80VSysAlarmtCheck(SystemReg *s)
           {
               s->Bat80VAlarmCont[12]=0;
           }
-          if(Hyst_On(s->Bat80VCellMinVoltageF,0.0f))
+          //if(Hyst_On(s->Bat80VCellMinVoltageF,0.0f))
+          if(Hyst_On(s->Bat80VCellMinTemperatureF,0.0f))   // TODO : [검증] 260624_Note1, 1.027 셀저온 알람 해제 변수오류 수정(전압F->온도F)
           {
               s->Bat80VAlarmCont[12]=0;
               s->BAT80VAlarmReg.bit.CellTemp_UN=0;
