@@ -1107,7 +1107,8 @@ void Cal12VSysAlarmtCheck(SystemReg *s)
           s->BAT12VAlarmReg.bit.CellTemp_OV =0;
       }
       // 셀 저온 Alarm
-      if(s->Bat12VCellMinVoltageF <= C_Bat12VUDCellTemperatureAlarm)
+      //if(s->Bat12VCellMinVoltageF <= C_Bat12VUDCellTemperatureAlarm)
+      if(s->Bat12VCellMinTemperatureF <= C_Bat12VUDCellTemperatureAlarm)   // TODO : [검증] 260625_Note1, 1.027 12V 셀저온 경고 변수오류 수정(전압F->온도F)
       {
           s->BAT12VAlarmReg.bit.CellTemp_UN =1;
       }
@@ -1116,7 +1117,8 @@ void Cal12VSysAlarmtCheck(SystemReg *s)
           s->BAT12VAlarmReg.bit.CellTemp_UN =0;
       }
       // 셀 온도 편차 Alarm
-      if(s->Bat12VCellDivVoltageF >= C_Bat12VDIVCellTemperatureAlarm)
+      //if(s->Bat12VCellDivVoltageF >= C_Bat12VDIVCellTemperatureAlarm)
+      if(s->Bat12VCellDivTemperatureF >= C_Bat12VDIVCellTemperatureAlarm)   // TODO : [검증] 260625_Note1, 1.027 12V 셀온도편차 경고 변수오류 수정(전압편차F->온도편차F)
       {
           s->BAT12VAlarmReg.bit.CellTemp_BL =1;
       }
@@ -1182,12 +1184,14 @@ void Cal12VSysFaultCheck(SystemReg *s)
           s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellOt =1;
       }
       // 셀 저온 FAULT
-      if(s->Bat12VCellMinVoltageF <= C_Bat12VUDCellTemperatureFault)
+      //if(s->Bat12VCellMinVoltageF <= C_Bat12VUDCellTemperatureFault)
+      if(s->Bat12VCellMinTemperatureF <= C_Bat12VUDCellTemperatureFault)   // TODO : [검증] 260625_Note1, 1.027 12V 셀저온 보호 변수오류 수정(전압F->온도F)
       {
           s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellUt =1;
       }
       // 셀 온도 편차 FAULT
-      if(s->Bat12VCellDivVoltageF >= C_Bat12VDIVCellTemperatureFault)
+      //if(s->Bat12VCellDivVoltageF >= C_Bat12VDIVCellTemperatureFault)
+      if(s->Bat12VCellDivTemperatureF >= C_Bat12VDIVCellTemperatureFault)   // TODO : [검증] 260625_Note1, 1.027 12V 셀온도편차 보호 변수오류 수정(전압편차F->온도편차F)
       {
           s->BAT12VFaulBuftReg.bit.Bsa_PrtctCellUnbalTmp =1;
       }
